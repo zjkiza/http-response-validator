@@ -1,0 +1,38 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    ZJKiza\HttpResponseValidator\Contract\ResultInterface: '@ZJKiza\HttpResponseValidator\Monad\Result'
+
+    ZJKiza\HttpResponseValidator\Monad\Result: ~
+    ZJKiza\HttpResponseValidator\Monad\Success: ~
+    ZJKiza\HttpResponseValidator\Monad\Failure: ~
+
+    ZJKiza\HttpResponseValidator\HttpLogger\HttpResponseLogger:
+        public: true
+
+    # Handler services
+    ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler:
+        public: true
+        tags:
+          - { name: 'zjkiza.validate_http_response.handler_factory'}
+
+    ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler:
+        public: true
+        tags:
+          - { name: 'zjkiza.validate_http_response.handler_factory'}
+
+    ZJKiza\HttpResponseValidator\Handler\ValidateArrayKeysExistHandler:
+        public: true
+        tags:
+          - { name: 'zjkiza.validate_http_response.handler_factory'}
+
+    handler_factory:
+        public: true
+        class: ZJKiza\HttpResponseValidator\Handler\Factory\HandlerFactory
+        arguments:
+          -  !tagged_iterator { tag: 'zjkiza.validate_http_response.handler_factory', default_index_method: 'getIndex' }
+
+    ZJKiza\HttpResponseValidator\Contract\HandlerFactoryInterface: '@handler_factory'

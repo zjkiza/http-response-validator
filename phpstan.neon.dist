@@ -1,0 +1,16 @@
+parameters:
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests/Resources/*
+    level: max
+    bootstrapFiles:
+        - phpstan.bootstrap.php
+    symfony:
+        containerXmlPath: tests/Resources/var/cache/test/ZJKiza_HttpResponseValidator_Tests_Resources_App_ZJKizaHttpResponseValidatorBundleTestKernelTestDebugContainer.xml
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/phpstan/phpstan-symfony/extension.neon
+    - vendor/phpstan/phpstan-symfony/rules.neon

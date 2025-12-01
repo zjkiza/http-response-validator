@@ -1,0 +1,24 @@
+container_php: str = 'php_bundle_validate_http_response'
+container_db: str = None
+
+waiting_db_connection: bool = True
+phpunit_code_error_bypass: bool = False
+
+containers: list = [
+    container_php,
+    container_db
+]
+
+container_work_dir: str = '/www'
+
+docker_compose_files_list: list[str] = [
+    'docker-compose.yaml'
+]
+
+commands: dict[str, str] = {
+    'composer install': 'composer install',
+    'composer run phpunit': 'composer run phpunit-ci',
+    'composer run phpstan': 'composer run phpstan',
+    'composer run psalm': 'composer run psalm',
+    'composer run phpmd': 'composer run phpmd',
+}

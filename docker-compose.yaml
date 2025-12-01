@@ -1,0 +1,30 @@
+services:
+
+    php_bundle_validate_http_response:
+        restart: on-failure
+        build:
+            context: .
+            dockerfile: ./docker/php/Dockerfile
+            args:
+                SYSTEM_TIMEZONE:            ${SYSTEM_TIMEZONE}
+                PHP_XDEBUG_ENABLE:          ${PHP_XDEBUG_ENABLE}
+                PHP_XDEBUG_MODE:            ${PHP_XDEBUG_MODE}
+                PHP_XDEBUG_REMOTE_PORT:     ${PHP_XDEBUG_REMOTE_PORT}
+                PHP_XDEBUG_REMOTE_ADDRESS:  ${PHP_XDEBUG_REMOTE_ADDRESS}
+                PHP_XDEBUG_IDEKEY:          ${PHP_XDEBUG_IDEKEY}
+        extra_hosts:
+            - host.docker.internal:host-gateway
+        env_file:
+            - .env
+        container_name: php_bundle_validate_http_response
+        hostname: php_bundle_validate_http_response
+        volumes:
+          - ./:/www
+        working_dir: /www
+        expose:
+          - "9000"
+        networks:
+            - docker-core-bundle-validate_http_response
+
+networks:
+    docker-core-bundle-validate_http_response:

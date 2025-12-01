@@ -1,0 +1,7 @@
+services:
+  ZJKiza\HttpResponseValidator\Tests\Resources\Logger\TestLogger:
+      public: true
+
+  Psr\Log\LoggerInterface:
+      alias: ZJKiza\HttpResponseValidator\Tests\Resources\Logger\TestLogger
+      public: true
