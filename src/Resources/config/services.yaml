@@ -17,22 +17,22 @@ services:
     ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler:
         public: true
         tags:
-          - { name: 'zjkiza.validate_http_response.handler_factory'}
+          - { name: 'zjkiza.http_response_validate.handler_factory'}
 
     ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler:
         public: true
         tags:
-          - { name: 'zjkiza.validate_http_response.handler_factory'}
+          - { name: 'zjkiza.http_response_validate.handler_factory'}
 
     ZJKiza\HttpResponseValidator\Handler\ValidateArrayKeysExistHandler:
         public: true
         tags:
-          - { name: 'zjkiza.validate_http_response.handler_factory'}
+          - { name: 'zjkiza.http_response_validate.handler_factory'}
 
     handler_factory:
         public: true
         class: ZJKiza\HttpResponseValidator\Handler\Factory\HandlerFactory
         arguments:
-          -  !tagged_iterator { tag: 'zjkiza.validate_http_response.handler_factory', default_index_method: 'getIndex' }
+          -  !tagged_iterator { tag: 'zjkiza.http_response_validate.handler_factory', default_index_method: 'getIndex' }
 
     ZJKiza\HttpResponseValidator\Contract\HandlerFactoryInterface: '@handler_factory'

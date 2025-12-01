@@ -1,6 +1,6 @@
-# Validator Http Response Bundle
+# Http Response Validator Bundle
 
-A Symfony bundle for validating HTTP responses using a simple Result monad and handler chains.
+A Symfony bundle for HTTP responses validating using a simple Result monad and handler chains.
 
 The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`), then through a series of handlers (pipelines) the status code is validated, the content is logged, JSON is extracted and the structure is checked. Each handler returns a `Result', so the chain breaks on the first error and throws an exception with a unique message ID.
 
@@ -17,10 +17,10 @@ The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`),
 
 ## Installation
 
-Add "zjkiza/validator-http-response" to your composer.json file.
+Add "zjkiza/http-response-validator" to your composer.json file.
 
 ```
-composer require zjkiza/validator-http-response
+composer require zjkiza/http-response-validator
 ```
 
 
@@ -42,7 +42,7 @@ return [
 ];
 ```
 
-2) Bundle automatically registers services and factory class for handlers via service tag `zjkiza.validate_http_response.handler_factory`.
+2) Bundle automatically registers services and factory class for handlers via service tag `zjkiza.http_response_validate.handler_factory`.
 
 
 ## Quick start
@@ -138,14 +138,14 @@ final class ValidateEmailFormatHandler extends AbstractHandler implements Handle
 }
 ```
 
-2) Register the service and be sure to add a tag `zjkiza.validate_http_response.handler_factory`:
+2) Register the service and be sure to add a tag `zjkiza.http_response_validate.handler_factory`:
 
 ```yaml
 # config/services.yaml
 services:
   App\HttpResponse\Handler\ValidateEmailFormatHandler:
     tags:
-      - { name: 'zjkiza.validate_http_response.handler_factory' }
+      - { name: 'zjkiza.http_response_validate.handler_factory' }
 ```
 
 3) Use it in a chain across `HandlerFactoryInterface`:
