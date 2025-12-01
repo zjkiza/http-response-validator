@@ -1,6 +1,6 @@
 {
-    "name": "zjkiza/response-validator-bundle",
-    "description": "Response validator bundle.",
+    "name": "zjkiza/http-response-validator",
+    "description": "A Symfony bundle for validating HTTP responses using a simple Result monad and handler chains.",
     "type": "symfony-bundle",
     "license": "MIT",
     "authors": [
