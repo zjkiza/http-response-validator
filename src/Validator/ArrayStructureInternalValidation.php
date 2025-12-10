@@ -9,6 +9,7 @@ use ZJKiza\HttpResponseValidator\Contract\ValidationStrategy;
 use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
 use ZJKiza\HttpResponseValidator\Validator\Handler\NestedStructureHandler;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
+use ZJKiza\HttpResponseValidator\Validator\Helper\RecursiveDescent;
 use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker;
 use ZJKiza\HttpResponseValidator\Validator\Handler\WildcardHandler;
 use ZJKiza\HttpResponseValidator\Validator\Handler\MissingKeyHandler;
@@ -16,17 +17,19 @@ use ZJKiza\HttpResponseValidator\Validator\Handler\NullCheckHandler;
 use ZJKiza\HttpResponseValidator\Validator\Handler\TypeCheckHandler;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ValidationContext;
 
-final class ArrayStructureInternalValidation implements ValidationStrategy
+final readonly class ArrayStructureInternalValidation implements ValidationStrategy
 {
-    /**
-     * @var StructureValidationHandlerInterface[]
-     */
+    /** @var StructureValidationHandlerInterface[] */
     private array $handlers;
+
+    private RecursiveDescent $recursiveDescent;
+
+    private ValidationContext $context;
 
     public function __construct(
         private ErrorCollector $errorCollector,
-        private readonly bool $ignoreNulls = false,
-        private readonly bool $checkTypes = false,
+        private bool $ignoreNulls = false,
+        private bool $checkTypes = false,
     ) {
         $this->handlers = [
             new WildcardHandler(),
@@ -35,6 +38,17 @@ final class ArrayStructureInternalValidation implements ValidationStrategy
             new NullCheckHandler(),
             new TypeCheckHandler(),
         ];
+
+        $this->recursiveDescent = new RecursiveDescent(
+            validateCallback: fn (array $structure, array $data, string $path) => $this->validate($structure, $data, $path),
+        );
+
+        $this->context = new ValidationContext(
+            ignoreNulls: $this->ignoreNulls,
+            checkTypes: $this->checkTypes,
+            typeChecker: new TypeChecker(),
+            validateCallback: fn (array $structure, array $data, string $path) => $this->validate($structure, $data, $path),
+        );
     }
 
     /**
@@ -45,16 +59,9 @@ final class ArrayStructureInternalValidation implements ValidationStrategy
     {
         foreach ($structure as $key => $expected) {
 
-            $context = new ValidationContext(
-                ignoreNulls: $this->ignoreNulls,
-                checkTypes:  $this->checkTypes,
-                typeChecker: new TypeChecker(),
-                validateCallback: fn (array $structure, array $data, string $path) => $this->validate($structure, $data, $path),
-            );
-
             foreach ($this->handlers as $handler) {
-                if ($handler->support($key, $expected, $data, $currentPath, $context)) {
-                    $handled = $handler->handle($key, $expected, $data, $currentPath, $this->errorCollector, $context);
+                if ($handler->support($key, $expected, $data, $currentPath, $this->context)) {
+                    $handled = $handler->handle($key, $expected, $data, $currentPath, $this->errorCollector, $this->context);
                     if (false === $handled) {
                         break;
                     }
@@ -64,15 +71,14 @@ final class ArrayStructureInternalValidation implements ValidationStrategy
                     [$key, $expected] = $this->transformLeaf($key, $expected);
                 }
             }
-            // Recursive descent for nested structures
-            if (\array_key_exists($key, $data) && \is_array($expected)) {
 
-                /** @var array<array-key, mixed> $dataArray */
-                $dataArray = $data[$key];
-
-                /** @var array<array-key, mixed> $expected */
-                $this->validate($expected, $dataArray, $currentPath.'.'.$key);
-            }
+            $this->recursiveDescent->descend(
+                allow: true,
+                data: $data,
+                key: $key,
+                expected: $expected,
+                currentPath: $currentPath,
+            );
         }
     }
 
@@ -81,9 +87,7 @@ final class ArrayStructureInternalValidation implements ValidationStrategy
         return $this->errorCollector;
     }
 
-    /**
-     * @return array{string, string|null}
-     */
+    /** @return array{string, string|null} */
     private function transformLeaf(int|string $key, mixed $expected): array
     {
         // Format A: ['a', 'b']

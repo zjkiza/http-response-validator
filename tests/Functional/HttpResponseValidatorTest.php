@@ -119,7 +119,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $expected = [
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/Message ID=[a-f0-9]+ : .*Unexpected status code 200 expected 201/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
@@ -127,7 +127,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
                     'http_request_failed' => [
                         'method' => 'GET',
                         'url' => 'https://example.com/',
-                        'body' => function ($value) {
+                        'body' => function ($value): void {
 
                             $expected = [
                                 'name' => 'Foo',
@@ -143,12 +143,12 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/Message ID=[a-f0-9]+ : .*\\[HttpRequestLogger ERROR CODE\\] Unexpected status code 200 expected 201/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
                 'context' => [
-                    'trace' => function ($trace) {
+                    'trace' => function ($trace): void {
                         $this->assertIsArray($trace);
                     },
                 ],
@@ -189,11 +189,11 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $expected = [
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/^[ZJKiza\\\\HttpResponseValidator\\\\Handler\\\\ExtractResponseJsonHandler\] Message ID=[a-f0-9]+ : PHPUnit\\\\Framework\\\\TestCase::runTest -> \[ExtractResponseJsonHandler\] Syntax error$/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
-                'context' => function ($trace) {
+                'context' => function ($trace): void {
                     $this->assertIsArray($trace);
                 },
 
@@ -225,11 +225,11 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $expected = [
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/^\[ZJKiza\\\\HttpResponseValidator\\\\Handler\\\\ArrayStructureValidateInternalHandler\] Message ID=[a-f0-9]+ :  PHPUnit\\\\Framework\\\\TestCase::runTest -> \[ArrayStructureValidateInternalHandler\] Errors: Missing required key "root\.lorem"\.$/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
-                'context' => function ($trace) {
+                'context' => function ($trace): void {
                     $this->assertIsArray($trace);
                 },
 
@@ -261,11 +261,11 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $expected = [
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/^\[ZJKiza\\\\HttpResponseValidator\\\\Handler\\\\ArrayStructureValidateInternalHandler\] Message ID=[a-f0-9]+ :  PHPUnit\\\\Framework\\\\TestCase::runTest -> \[ArrayStructureValidateInternalHandler\] Errors: Missing required key "root\.lorem", Missing required key "root\.bar"\.$/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
-                'context' => function ($trace) {
+                'context' => function ($trace): void {
                     $this->assertIsArray($trace);
                 },
 
@@ -321,11 +321,11 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $expected = [
             [
                 'level' => 'error',
-                'message' => function (string $message) {
+                'message' => function (string $message): void {
                     $pattern = '/^\[ZJKiza\\\\HttpResponseValidator\\\\Handler\\\\ArrayStructureValidateExactHandler\] Message ID=[a-f0-9]+ ?: +PHPUnit\\\\Framework\\\\TestCase::runTest -> \[ArrayStructureValidateExactHandler\] Errors: Exact key mismatch at \"root\.headers\.bar\"\. Expected: PHPUnit\\\\Framework\\\\TestCase::runTest -> \[\"barKey1\"\], got: PHPUnit\\\\Framework\\\\TestCase::runTest -> \[\"barKey1\",\"barKey2\"\]\.$/';
                     self::assertThat($message, new RegularExpression($pattern));
                 },
-                'context' => function ($trace) {
+                'context' => function ($trace): void {
                     $this->assertIsArray($trace);
                 },
 

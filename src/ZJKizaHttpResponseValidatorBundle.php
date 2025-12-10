@@ -7,7 +7,7 @@ namespace ZJKiza\HttpResponseValidator;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use ZJKiza\HttpResponseValidator\DependencyInjection\Extension;
-use Symfony\Component\DependencyInjection\Extension\ExtensionInterface;
+use ZJKiza\HttpResponseValidator\DependencyInjection\Extension as ExtensionDependency;
 
 final class ZJKizaHttpResponseValidatorBundle extends Bundle
 {
@@ -16,7 +16,7 @@ final class ZJKizaHttpResponseValidatorBundle extends Bundle
         parent::build($container);
     }
 
-    public function getContainerExtension(): ExtensionInterface
+    public function getContainerExtension(): ExtensionDependency
     {
         return new Extension();
     }

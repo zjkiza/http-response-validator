@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1]
+Fixed:
+- static analysis issues
+- optimized code
+
 ## [0.7.0]
 Added: 
 - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler` – validates the structure of the response using strict/exact key and type checking

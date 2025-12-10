@@ -47,6 +47,5 @@ final class NestedStructureHandler implements StructureValidationHandlerInterfac
         $context->validate($expected, $childValue, $fullKey);
 
         return false;
-
     }
 }

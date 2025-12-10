@@ -190,7 +190,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         $this->assertFalse($validator->getErrorCollector()->hasErrors());
     }
 
-    public function testExpectedErrorsWhenValidationTypeIsIncorrected(): void
+    public function testExpectErrorsWhenValidationTypeIsIncorrected(): void
     {
         $data = [
             'args' => [

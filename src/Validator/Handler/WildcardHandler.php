@@ -18,7 +18,7 @@ final class WildcardHandler implements StructureValidationHandlerInterface
     public function handle(int|string $key, mixed $expected, array $data, string $currentPath, ErrorCollector $errorCollector, ValidationContext $context): bool
     {
         foreach ($data as $item) {
-            // recursion is in the realm of orchestration/delegatora
+            // recursion is in the realm of orchestration/delegate
             /**
              * @var array<array-key, mixed> $expected
              * @var array<array-key, mixed> $item

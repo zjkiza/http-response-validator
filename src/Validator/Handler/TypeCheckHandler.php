@@ -12,7 +12,7 @@ final class TypeCheckHandler implements StructureValidationHandlerInterface
 {
     public function support(int|string $key, mixed $expected, array $data, string $currentPath, ValidationContext $context): bool
     {
-        return true === $context->checkTypes && \is_string($expected) && \array_key_exists($key, $data);
+        return $context->checkTypes && \is_string($expected) && \array_key_exists($key, $data);
     }
 
     public function handle(int|string $key, mixed $expected, array $data, string $currentPath, ErrorCollector $errorCollector, ValidationContext $context): bool
