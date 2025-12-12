@@ -45,15 +45,17 @@ final class HttpResponseLogger
 
         $context = \sprintf('[HttpRequestLogger ERROR CODE] Unexpected status code %d expected %d', $statusCode, $expected);
         $messageId = addIdInMessage();
+        $message = \sprintf('%s%s', $messageId, $context);
 
         $this->logger->error(
-            addIdInMessage($context),
+            $message,
             ['http_request_failed' => $this->httpRequestFailed($response)]
         );
 
         $this->throwHttpException(
             $statusCode,
-            \sprintf('%s %s', $messageId, $context)
+            $message,
+            $messageId,
         );
     }
 
@@ -98,13 +100,13 @@ final class HttpResponseLogger
         ];
     }
 
-    private function throwHttpException(int $statusCode, string $message): void
+    private function throwHttpException(int $statusCode, string $message, string $messageId): void
     {
         match ($statusCode) {
-            self::HTTP_BAD_REQUEST => throw new BadRequestHttpException(addIdInMessage()),
-            self::HTTP_UNAUTHORIZED => throw new UnauthorizedHttpException('bearer', addIdInMessage('Invalid credentials')),
-            self::HTTP_FORBIDDEN => throw new AccessDeniedHttpException(addIdInMessage()),
-            self::HTTP_NOT_FOUND => throw new NotFoundHttpException(addIdInMessage()),
+            self::HTTP_BAD_REQUEST => throw new BadRequestHttpException(\sprintf('%s %s',$messageId, 'Bad request.')),
+            self::HTTP_UNAUTHORIZED => throw new UnauthorizedHttpException('bearer', \sprintf('%s %s',$messageId, 'Invalid credentials')),
+            self::HTTP_FORBIDDEN => throw new AccessDeniedHttpException(\sprintf('%s %s',$messageId, 'Access denied.')),
+            self::HTTP_NOT_FOUND => throw new NotFoundHttpException(\sprintf('%s %s',$messageId, 'Not found.')),
             default => throw new RuntimeException($message, $statusCode),
         };
     }

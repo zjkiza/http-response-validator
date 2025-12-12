@@ -48,7 +48,7 @@ abstract class AbstractHandler
         $this->logger->error($loggerMessage, ['trace' => $backtrace]);
 
         /** @var \Throwable $exception */
-        $exception = new $exceptionClass($overrideMessage, $errorCode);
+        $exception = new $exceptionClass(message: $overrideMessage, code: $errorCode);
 
         /** @psalm-suppress LessSpecificReturnStatement */
         return Result::failure($loggerMessage, $exception);

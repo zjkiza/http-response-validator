@@ -36,6 +36,6 @@ final class HandlerFactory implements HandlerFactoryInterface
     public function create(string $class): HandlerInterface
     {
         return $this->handlers[$class]
-            ?? throw new \RuntimeException("Handler '$class' not found.");
+            ?? throw new \RuntimeException(\sprintf("Handler '%s' not found.", $class));
     }
 }

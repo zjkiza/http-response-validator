@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0]
+Fixed:
+- generating only one message ID,
+- creating an exception fixed problem with order (message, code, previous).
+
 ## [0.7.1]
 Fixed:
 - static analysis issues

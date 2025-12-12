@@ -6,6 +6,12 @@ use Rector\CodeQuality\Rector\Class_\InlineConstructorDefaultToPropertyRector;
 use Rector\Config\RectorConfig;
 use Rector\Set\ValueObject\LevelSetList;
 use Rector\Set\ValueObject\SetList;
+use Rector\CodingStyle\Rector\Encapsed\EncapsedStringsToSprintfRector;
+use Rector\DeadCode\Rector\ClassMethod\RemoveUselessParamTagRector;
+use Rector\DeadCode\Rector\ClassMethod\RemoveUnusedPromotedPropertyRector;
+use Rector\TypeDeclaration\Rector\ClassMethod\AddParamTypeDeclarationRector;
+use Rector\TypeDeclaration\Rector\ClassMethod\AddReturnTypeDeclarationRector;
+use Rector\ValueObject\PhpVersion;
 
 return static function (RectorConfig $rectorConfig): void {
     $rectorConfig->paths([
@@ -17,10 +23,8 @@ return static function (RectorConfig $rectorConfig): void {
         __DIR__ . '/tests/Resources/var/cache/**/*',
     ]);
 
-    // register a single rule
-    $rectorConfig->rule(InlineConstructorDefaultToPropertyRector::class);
+    $rectorConfig->phpVersion(PhpVersion::PHP_84);
 
-    //define sets of rules
     $rectorConfig->sets([
         LevelSetList::UP_TO_PHP_82,
         SetList::DEAD_CODE,
@@ -28,4 +32,11 @@ return static function (RectorConfig $rectorConfig): void {
         SetList::CODE_QUALITY,
         SetList::TYPE_DECLARATION,
     ]);
+
+    $rectorConfig->rule(InlineConstructorDefaultToPropertyRector::class);
+    $rectorConfig->rule(AddParamTypeDeclarationRector::class);
+    $rectorConfig->rule(AddReturnTypeDeclarationRector::class);
+    $rectorConfig->rule(EncapsedStringsToSprintfRector::class);
+    $rectorConfig->rule(RemoveUselessParamTagRector::class);
+    $rectorConfig->rule(RemoveUnusedPromotedPropertyRector::class);
 };
