@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0]
+Fixed:
+- Relaxed `psr/log` dependency constraint to support Symfony 5.4 (`^1.1 || ^2.0 || ^3.0`)
+
 ## [0.8.0]
 Fixed:
 - generating only one message ID,
