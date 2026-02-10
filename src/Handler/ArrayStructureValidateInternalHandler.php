@@ -57,7 +57,7 @@ final class ArrayStructureValidateInternalHandler extends AbstractHandler implem
         );
 
         /** @var Result<array<string, mixed>> */
-        return $this->fail($message, InvalidArgumentException::class);
+        return $this->fail(new InvalidArgumentException($message));
     }
 
     /**

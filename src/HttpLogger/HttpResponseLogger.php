@@ -103,10 +103,10 @@ final class HttpResponseLogger
     private function throwHttpException(int $statusCode, string $message, string $messageId): void
     {
         match ($statusCode) {
-            self::HTTP_BAD_REQUEST => throw new BadRequestHttpException(\sprintf('%s %s',$messageId, 'Bad request.')),
-            self::HTTP_UNAUTHORIZED => throw new UnauthorizedHttpException('bearer', \sprintf('%s %s',$messageId, 'Invalid credentials')),
-            self::HTTP_FORBIDDEN => throw new AccessDeniedHttpException(\sprintf('%s %s',$messageId, 'Access denied.')),
-            self::HTTP_NOT_FOUND => throw new NotFoundHttpException(\sprintf('%s %s',$messageId, 'Not found.')),
+            self::HTTP_BAD_REQUEST => throw new BadRequestHttpException(\sprintf('%s %s', $messageId, 'Bad request.')),
+            self::HTTP_UNAUTHORIZED => throw new UnauthorizedHttpException("Bearer realm='API'", \sprintf('%s %s', $messageId, 'Invalid credentials')),
+            self::HTTP_FORBIDDEN => throw new AccessDeniedHttpException(\sprintf('%s %s', $messageId, 'Access denied.')),
+            self::HTTP_NOT_FOUND => throw new NotFoundHttpException(\sprintf('%s %s', $messageId, 'Not found.')),
             default => throw new RuntimeException($message, $statusCode),
         };
     }

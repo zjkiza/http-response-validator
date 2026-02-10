@@ -6,6 +6,7 @@ namespace ZJKiza\HttpResponseValidator\Handler;
 
 use Symfony\Contracts\HttpClient\ResponseInterface;
 use ZJKiza\HttpResponseValidator\Contract\HandlerInterface;
+use ZJKiza\HttpResponseValidator\Exception\RuntimeException;
 use ZJKiza\HttpResponseValidator\Handler\Factory\TagIndexMethod;
 use ZJKiza\HttpResponseValidator\Monad\Result;
 
@@ -39,7 +40,7 @@ final class ExtractResponseJsonHandler extends AbstractHandler implements Handle
             $message = \sprintf('%s[ExtractResponseJsonHandler] %s', addIdInMessage(), $exception->getMessage());
 
             /** @var Result<array<string,mixed>|object> */
-            return $this->fail($message, $exception::class, (int) $exception->getCode());
+            return $this->fail(new RuntimeException($message));
         }
     }
 

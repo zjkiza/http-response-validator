@@ -22,11 +22,9 @@ abstract class AbstractHandler
     }
 
     /**
-     * @param class-string<\Throwable> $exceptionClass
-     *
      * @return Result<non-falsy-string>
      */
-    protected function fail(string $message, string $exceptionClass = \RuntimeException::class, int $errorCode = 400): Result
+    protected function fail(\Throwable $exception): Result
     {
         /** @var list<array{function: string, line?: int, file?: string, class?: class-string, type?: '->'|'::', args?: list<mixed>, object?: object}> $backtrace */
         $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
@@ -36,7 +34,7 @@ abstract class AbstractHandler
         $overrideMessage = \preg_replace(
             '/(:\s*)(\[[^\]]+\])/',
             '$1'.$runPlace.' $2',
-            addIdInMessage($message)
+            addIdInMessage($exception->getMessage())
         );
 
         $loggerMessage = \sprintf(
@@ -47,8 +45,8 @@ abstract class AbstractHandler
 
         $this->logger->error($loggerMessage, ['trace' => $backtrace]);
 
-        /** @var \Throwable $exception */
-        $exception = new $exceptionClass(message: $overrideMessage, code: $errorCode);
+        $ref = new \ReflectionProperty($exception, 'message');
+        $ref->setValue($exception, $overrideMessage);
 
         /** @psalm-suppress LessSpecificReturnStatement */
         return Result::failure($loggerMessage, $exception);

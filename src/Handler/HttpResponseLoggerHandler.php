@@ -49,7 +49,7 @@ final class HttpResponseLoggerHandler extends AbstractHandler implements Handler
             return Result::success($value);
         } catch (\Throwable $exception) {
             /** @var Result<ResponseInterface|string> */
-            return $this->fail($exception->getMessage(), $exception::class, (int) $exception->getCode());
+            return $this->fail($exception);
         }
     }
 

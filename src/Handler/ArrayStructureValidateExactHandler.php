@@ -57,7 +57,7 @@ final class ArrayStructureValidateExactHandler extends AbstractHandler implement
         );
 
         /** @var Result<array<string, mixed>> */
-        return $this->fail($message, InvalidArgumentException::class);
+        return $this->fail(new InvalidArgumentException($message));
     }
 
     /**

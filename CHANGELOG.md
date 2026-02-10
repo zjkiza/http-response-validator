@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.0]
+Fixed:
+- error when adding exception message
+
 ## [0.9.0]
 Fixed:
 - Relaxed `psr/log` dependency constraint to support Symfony 5.4 (`^1.1 || ^2.0 || ^3.0`)
