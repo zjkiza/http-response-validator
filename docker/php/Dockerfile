@@ -1,66 +1,6 @@
 FROM php:8.4-cli
 
-RUN apt-get update --fix-missing
-RUN apt-get update && apt-get install -y \
-    curl \
-    gettext \
-    openssl \
-    openssh-client \
-    zip \
-    net-tools \
-    nano \
-    build-essential \
-    libssl-dev \
-    zlib1g-dev \
-    libpng-dev \
-    libpq-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libzip-dev \
-    libxml2-dev \
-    libicu-dev \
-    libxslt-dev \
-    xsltproc
-
-RUN docker-php-ext-configure intl
-RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/
-
-RUN docker-php-ext-install bcmath exif gd gettext zip soap simplexml pcntl intl xsl
-
-RUN pecl install apcu && docker-php-ext-enable apcu
-
-RUN pecl install xdebug
-
-#   Setup Composer
-
-WORKDIR /tmp
-
-ENV COMPOSER_HOME /composer
-
-# Add global binary directory to PATH and make sure to re-export it
-ENV PATH /composer/vendor/bin:$PATH
-
-# Allow Composer to be run as root
-ENV COMPOSER_ALLOW_SUPERUSER 1
-
-# Setup the Composer installer
-RUN curl -o /tmp/composer-setup.php https://getcomposer.org/installer \
-    && curl -o /tmp/composer-setup.sig https://composer.github.io/installer.sig \
-    && php -r "if (hash('SHA384', file_get_contents('/tmp/composer-setup.php')) !== trim(file_get_contents('/tmp/composer-setup.sig'))) { unlink('/tmp/composer-setup.php'); echo 'Invalid installer' . PHP_EOL; exit(1); }"
-
-RUN php /tmp/composer-setup.php
-
-RUN mv /tmp/composer.phar /usr/local/bin/composer.phar && \
-    ln -s /usr/local/bin/composer.phar /usr/local/bin/composer && \
-    chmod +x /usr/local/bin/composer
-
-#  Configure
-
 ARG SYSTEM_TIMEZONE=UTC
-
-RUN ln -snf /usr/share/zoneinfo/${SYSTEM_TIMEZONE} /etc/localtime && echo ${SYSTEM_TIMEZONE} > /etc/timezone
-ENV TZ="${SYSTEM_TIMEZONE}"
-
 ARG APP_ENV=dev
 ARG PHP_XDEBUG_ENABLE=1
 ARG PHP_XDEBUG_MODE=debug
@@ -69,29 +9,80 @@ ARG PHP_XDEBUG_REMOTE_ADDRESS=host.docker.internal
 ARG PHP_XDEBUG_IDEKEY=PHPSTORM
 ARG PHP_IDE_CONFIG="serverName=localhost"
 
-ENV PHP_XDEBUG_ENABLE=${PHP_XDEBUG_ENABLE}
-ENV PHP_XDEBUG_MODE=${PHP_XDEBUG_MODE}
-ENV PHP_XDEBUG_REMOTE_PORT=${PHP_XDEBUG_REMOTE_PORT}
-ENV PHP_XDEBUG_REMOTE_ADDRESS=${PHP_XDEBUG_REMOTE_ADDRESS}
-ENV PHP_XDEBUG_IDEKEY=${PHP_XDEBUG_IDEKEY}
-ENV PHP_IDE_CONFIG=${PHP_IDE_CONFIG}
-ENV SYSTEM_TIMEZONE=${SYSTEM_TIMEZONE}
+ENV TZ=${SYSTEM_TIMEZONE} \
+    COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_HOME=/composer \
+    PATH=/composer/vendor/bin:$PATH \
+    PHP_XDEBUG_ENABLE=${PHP_XDEBUG_ENABLE} \
+    PHP_XDEBUG_MODE=${PHP_XDEBUG_MODE} \
+    PHP_XDEBUG_REMOTE_PORT=${PHP_XDEBUG_REMOTE_PORT}\
+    PHP_XDEBUG_REMOTE_ADDRESS=${PHP_XDEBUG_REMOTE_ADDRESS} \
+    PHP_XDEBUG_IDEKEY=${PHP_XDEBUG_IDEKEY} \
+    PHP_IDE_CONFIG=${PHP_IDE_CONFIG} \
+    SYSTEM_TIMEZONE=${SYSTEM_TIMEZONE}
 
-ADD docker/php/conf /tmp
-RUN chmod +x /tmp/configure.sh
-RUN /tmp/configure.sh
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    unzip \
+    zip \
+    openssl \
+    openssh-client \
+    postgresql-client \
+    gettext-base \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    libpq-dev \
+    libicu-dev \
+    libxml2-dev \
+    libxslt-dev \
+    zlib1g-dev \
+    build-essential \
+    xsltproc \
+    net-tools \
+    nano \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-configure intl \
+ && docker-php-ext-install -j$(nproc) \
+    bcmath \
+    exif \
+    gd \
+    gettext \
+    intl \
+    pdo \
+    pdo_mysql \
+    mysqli \
+    zip \
+    soap \
+    simplexml \
+    pcntl \
+    xsl
+
+RUN pecl install apcu \
+    xdebug \
+ && docker-php-ext-enable apcu
+
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
+ && echo ${TZ} > /etc/timezone
 
 #   Add GitHub to known hosts
+RUN mkdir -p /root/.ssh \
+ && chmod 700 /root/.ssh \
+ && ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-RUN cd; mkdir .ssh; chmod 0700 .ssh; touch /root/.ssh/known_hosts
-RUN ssh-keyscan github.com >> /root/.ssh/known_hosts
-
+COPY docker/php/conf /tmp
+RUN chmod +x /tmp/configure.sh && /tmp/configure.sh && rm -rf /tmp/*
 
 WORKDIR /www
 COPY --chown=${LOCAL_USER} . /www
 
 #   Holds a raised container
-
 COPY docker/php/cmd.sh /usr/local/bin/cmd.sh
 RUN chmod +x /usr/local/bin/cmd.sh
 

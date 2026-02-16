@@ -1,0 +1,11 @@
+# .dockerignore
+bin/.idea
+.git
+.idea
+build
+.gitignore
+*.md
+.env*
+.phpunit.cache
+.php-cs-fixer.cache
+.phpunit.result.cache

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.1]
+Optimization
+- Docker optimization for development
+
 ## [0.10.0]
 Fixed:
 - error when adding exception message
