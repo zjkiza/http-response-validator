@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.10.2]
+- Improved PhpUnitTool 
+
 ## [0.10.1]
 Optimization
 - Docker optimization for development

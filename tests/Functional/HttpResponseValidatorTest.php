@@ -155,7 +155,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayRecords($logger->records, $expected);
+        PhpUnitTool::assertArrayStructure($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -200,7 +200,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayRecords($logger->records, $expected);
+        PhpUnitTool::assertArrayStructure($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -236,7 +236,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayRecords($logger->records, $expected);
+        PhpUnitTool::assertArrayStructure($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -272,7 +272,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayRecords($logger->records, $expected);
+        PhpUnitTool::assertArrayStructure($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -332,7 +332,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayRecords($logger->records, $expected);
+        PhpUnitTool::assertArrayStructure($logger->records, $expected);
 
         $result->getOrThrow();
     }
