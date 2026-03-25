@@ -74,7 +74,7 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
     {
         $structure = [
             'args' => [
-                'test' => 'string',
+                'test' => 'int|null|string',
             ],
             'headers' => [
                 'host' => 'string',
@@ -149,8 +149,8 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
 
         $structure = [
             'args' => [
-                'test_string' => 'string',
-                'test_int' => 'int',
+                'test_string' => 'string|null',
+                'test_int' => 'int|float',
                 'test_float' => 'float',
                 'test_bool' => 'bool',
                 'test_array' => 'array',
@@ -164,8 +164,8 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
         $validator->validate($structure, $data);
 
         $expected = [
-            'Key "root.args.test_string" expects type "string", got "integer"',
-            'Key "root.args.test_int" expects type "int", got "string"',
+            'Key "root.args.test_string" expects type "string|null", got "integer"',
+            'Key "root.args.test_int" expects type "int|float", got "string"',
             'Key "root.args.test_float" expects type "float", got "string"',
             'Key "root.args.test_bool" expects type "bool", got "string"',
             'Key "root.args.test_array" expects type "array", got "string"',

@@ -190,6 +190,27 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         $this->assertFalse($validator->getErrorCollector()->hasErrors());
     }
 
+    public function testSuccessWithExpectedTypes(): void
+    {
+        $structure = [
+            'args' => [
+                'test' => 'string|bool|null',
+            ],
+        ];
+
+        $data = [
+            'args' => [
+                'test' => '123',
+            ],
+        ];
+
+        $validator = new ArrayStructureInternalValidation(new ErrorCollector(), true, true);
+
+        $validator->validate($structure, $data);
+
+        $this->assertFalse($validator->getErrorCollector()->hasErrors());
+    }
+
     public function testExpectErrorsWhenValidationTypeIsIncorrected(): void
     {
         $data = [
@@ -295,6 +316,31 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         $expected = [
             'Missing required key "root.headers.bar"',
             'Key "root.headers.ad.cc" expects type "string", got "object"',
+        ];
+
+        $this->assertSame($expected, $validator->getErrorCollector()->all());
+    }
+
+    public function testExpectErrorsWithCheckTypesWitchIsNotCorrect(): void
+    {
+        $structure = [
+            'args' => [
+                'test' => 'int|bool|null',
+            ],
+        ];
+
+        $data = [
+            'args' => [
+                'test' => '123',
+            ],
+        ];
+
+        $validator = new ArrayStructureInternalValidation(new ErrorCollector(), true, true);
+
+        $validator->validate($structure, $data);
+
+        $expected = [
+            'Key "root.args.test" expects type "int|bool|null", got "string"',
         ];
 
         $this->assertSame($expected, $validator->getErrorCollector()->all());

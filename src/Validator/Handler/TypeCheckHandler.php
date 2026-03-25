@@ -20,15 +20,26 @@ final class TypeCheckHandler implements StructureValidationHandlerInterface
         \assert(\is_string($expected));
 
         $actualValue = $data[$key];
-        if (!$context->typeChecker::isValid($expected, $actualValue)) {
-            $errorCollector->add(\sprintf(
-                'Key "%s.%s" expects type "%s", got "%s"',
-                $currentPath,
-                $key,
-                $expected,
-                \gettype($actualValue)
-            ));
+
+        $expectedTypes = \explode('|', $expected);
+
+        $errorTypes = [];
+
+        foreach ($expectedTypes as $expectedType) {
+            if ($context->typeChecker::isValid($expectedType, $actualValue)) {
+                return true;
+            }
+
+            $errorTypes[] = $expectedType;
         }
+
+        $errorCollector->add(\sprintf(
+            'Key "%s.%s" expects type "%s", got "%s"',
+            $currentPath,
+            $key,
+            \implode('|', $errorTypes),
+            \gettype($actualValue)
+        ));
 
         return true;
     }

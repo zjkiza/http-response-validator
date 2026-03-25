@@ -15,12 +15,14 @@ use ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateInternalHandler;
 use ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler;
 use ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler;
 use ZJKiza\HttpResponseValidator\Monad\Result;
-use ZJKiza\HttpResponseValidator\Tests\PhpUnitTool\PhpUnitTool;
+use ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait;
 use ZJKiza\HttpResponseValidator\Tests\Resources\KernelTestCase;
 use ZJKiza\HttpResponseValidator\Tests\Resources\Logger\TestLogger;
 
 final class HttpResponseValidatorTest extends KernelTestCase
 {
+    use ArrayMatchesTrait;
+
     private HandlerFactoryInterface $handlerFactory;
 
     protected function setUp(): void
@@ -155,7 +157,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayStructure($logger->records, $expected);
+        $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -200,7 +202,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayStructure($logger->records, $expected);
+        $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -219,7 +221,6 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ->bind($this->handlerFactory->create(ArrayStructureValidateInternalHandler::class)->setKeys(['name', 'lorem']));
         \restore_exception_handler();
 
-
         $this->expectException(InvalidArgumentException::class);
 
         $expected = [
@@ -236,7 +237,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayStructure($logger->records, $expected);
+        $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -255,7 +256,6 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ->bind($this->handlerFactory->create(ArrayStructureValidateInternalHandler::class)->setKeys(['name', 'lorem', 'bar']));
         \restore_exception_handler();
 
-
         $this->expectException(InvalidArgumentException::class);
 
         $expected = [
@@ -272,7 +272,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayStructure($logger->records, $expected);
+        $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
     }
@@ -315,7 +315,6 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ->bind($this->handlerFactory->create(ArrayStructureValidateExactHandler::class)->setKeys($structure));
         \restore_exception_handler();
 
-
         $this->expectException(InvalidArgumentException::class);
 
         $expected = [
@@ -332,7 +331,7 @@ final class HttpResponseValidatorTest extends KernelTestCase
             ],
         ];
 
-        PhpUnitTool::assertArrayStructure($logger->records, $expected);
+        $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
     }

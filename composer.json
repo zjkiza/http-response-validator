@@ -50,5 +50,8 @@
         "psalm": "vendor/bin/psalm --threads=8 --no-diff --no-cache",
         "rector": "vendor/bin/rector",
         "php-cs-fixer": "vendor/bin/php-cs-fixer fix --diff --verbose --show-progress=dots --allow-risky=yes"
+    },
+    "suggest": {
+      "phpunit/phpunit": "Required for using PHPUnit assertion traits"
     }
 }

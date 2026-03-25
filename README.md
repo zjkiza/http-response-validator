@@ -1,8 +1,10 @@
-0o# Http Response Validator Bundle
+# Http Response Validator Bundle
 
 A Symfony bundle for HTTP responses validating using a simple Result monad and handler chains.
 
 The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`), then through a series of handlers (pipelines) the status code is validated, the content is logged, JSON is extracted and the structure is checked. Each handler returns a `Result', so the chain breaks on the first error and throws an exception with a unique message ID.
+
+For unit testing, you can use the `PhpUnitTool` to easily test handlers in isolation with custom inputs and expected outputs.
 
 ## Characteristics
 
@@ -14,8 +16,15 @@ The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`),
   - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateInternalHandler` – validates the structure using internal/relaxed rules for key existence and potential type checking
 - Simple extension: add your own handler and register it with a single service tag
 - Clear error messages with `Message ID=<hex>` for easy tracking in logs
-
-
+- `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait` enables simple and flexible testing of array structure and values (ex. API response) in PHPUnit tests.
+  - `assertArrayStructureAndValues(array $expected, array $actual)` – asserts that the actual array has the same structure and values as the expected array, allowing for flexible matching (e.g., ignoring extra keys in the actual array).
+  - `assertArrayStrictStructureAndValues(array $expected, array $actual)` – asserts that the actual array has the exact same structure and values as the expected array, including the same keys and values, without allowing for any extra keys in the actual array.
+  Supports:
+  - structure check, 
+  - value check, 
+  - strict and non-strict mode, 
+  - custom validators (callable)
+  
 ## Installation
 
 Add "zjkiza/http-response-validator" to your composer.json file.
@@ -117,7 +126,7 @@ All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` 
 ## Direct Use: ArrayStructureExactValidation and ArrayStructureInternalValidation
 
 Validation services can be used standalone without the handler pipeline.
-For example, to validate data against a strict structure:
+For example, to validate data against a strict structure with type (string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string').
 
 ```php
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureExactValidation;
@@ -155,7 +164,10 @@ $data = Result::success($response)
     ->bind($this->handlerFactory->create(HttpResponseLoggerHandler::class)->setExpectedStatus(200))
     ->bind($this->handlerFactory->create(ExtractResponseJsonHandler::class)->setAssociative(true))
     ->bind($this->handlerFactory->create(ArrayStructureValidateExactHandler::class)
-        ->setKeys($requiredStructure)
+        ->setKeys([
+            'id' => 'int|string', 
+            'email' => 'string',
+        ])
         ->setCheckTypes(true)
         ->setIgnoreNulls(false)
     )
@@ -217,6 +229,108 @@ $result = Result::success($response)
 ```
 
 Note: if you don't want to use the `TagIndexMethod`, make sure your class implements the static `getIndex(): string` method that returns a unique index (most commonly FQCN).
+
+## Usage `PhpUnitTool`
+
+In your PHPUnit test, include the trait:
+
+```php
+use PHPUnit\Framework\TestCase;
+use ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait;
+
+class ApiTest extends TestCase
+{
+    use ArrayMatchesTrait;
+}
+```
+
+### Methods
+1. `assertArrayStructureAndValues(array $actual, array $expected)`
+
+Partial match (not strict)
+- additional keys are allowed in $actual
+- only checks what is defined in $expected
+
+Exsample: 
+```php
+$this->assertArrayStructureAndValues(
+    $actual,
+    [
+        'name' => 'John',
+        'email' => 'john@test.com',
+    ]
+);
+```
+passes if $actual has more fields (eg id, createdAt, etc.)
+
+2. `assertArrayStrictStructureAndValues(array $actual, array $expected)`
+
+Strict match
+- additional keys are NOT allowed in $actual
+- checks that $actual has exactly the same keys and values as $expected
+
+```php
+$this->assertArrayStrictStructureAndValues(
+    $actual,
+    [
+        'name' => 'John',
+        'email' => 'john@test.com',
+    ]
+);
+```
+must be exactly identical (except for the order in the associative array)
+
+### Rules of conduct
+
+- Associative array
+```php
+$expected = [
+    'a' => 1,
+    'b' => 2,
+];
+```
+1. the order does not matter,
+2. keys and values must exist.
+
+- List (numeric array)
+```php
+$expected = [1, 2, 3];
+```
+1. order is mandatory,
+2. the size must be the same.
+
+### Custom validate (callable)
+
+You can use closure for complex checks:
+```php
+$this->assertArrayStrictStructureAndValues(
+    $actual,
+    [
+        'user' => [
+            'id' => fn($v) => $this->assertIsInt($v),
+            'email' => 'test@example.com',
+        ],
+        'roles' => ['ROLE_USER', 'ROLE_ADMIN'],
+    ]
+);
+
+$this->assertArrayStrictStructureAndValues(
+    $actual,
+    [
+        'level' => 'error',
+        'message' => function (string $message): void {
+            $pattern = '/^\[ZJKiza\\\\HttpResponseValidator\\\\Handler\\\\ArrayStructureValidateExactHandler\] Message ID=[a-f0-9]+ ?: +PHPUnit\\\\Framework\\\\TestCase::runTest -> \[ArrayStructureValidateExactHandler\] Errors: Exact key mismatch at \"root\.headers\.bar\"\. Expected: PHPUnit\\\\Framework\\\\TestCase::runTest -> \[\"barKey1\"\], got: PHPUnit\\\\Framework\\\\TestCase::runTest -> \[\"barKey1\",\"barKey2\"\]\.$/';
+            self::assertThat($message, new RegularExpression($pattern));
+        },
+    ]
+);
+```
+
+### Notice
+
+- The trait must be used in a class that inherits from `PHPUnit\Framework\TestCase`
+- `assertArrayStructureAndValues` allows additional keys
+- `assertArrayStrictStructureAndValues` requires an exact match
 
 
 ## Logging in and message ID

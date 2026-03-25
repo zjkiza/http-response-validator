@@ -2,35 +2,20 @@
 
 declare(strict_types=1);
 
-namespace ZJKiza\HttpResponseValidator\Tests\PhpUnitTool;
+namespace ZJKiza\HttpResponseValidator\PhpUnit;
 
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 
 final class PhpUnitTool extends TestCase
 {
-    /**
-     * @deprecated since 0.12.0 Use \ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait->assertArrayStructureAndValues() instead.
-     *
-     * @param mixed[] $actual
-     * @param mixed[] $expected
-     */
-    public static function assertArrayStructure(array $actual, array $expected): void
-    {
-        self::compare($actual, $expected, 'root');
-    }
+    public static function compare(
+        mixed $actual,
+        mixed $expected,
+        string $path,
+        bool $strict,
+    ): void {
 
-    /**
-     * @param mixed[] $actual
-     * @param mixed[] $expected
-     */
-    public static function assertArrayStructureAndValues(array $actual, array $expected): void
-    {
-        self::compare($actual, $expected, 'root');
-    }
-
-    private static function compare(mixed $actual, mixed $expected, string $path): void
-    {
         if (\is_callable($expected)) {
             try {
                 $expected($actual);
@@ -47,10 +32,11 @@ final class PhpUnitTool extends TestCase
                 self::fail(\sprintf('Type mismatch at %s. Expected array, got ', $path).\gettype($actual));
             }
 
-            /**
-             * LISTA.
-             */
             if (\array_is_list($expected)) {
+
+                if ($strict && !\array_is_list($actual)) {
+                    self::fail(\sprintf('Type mismatch at %s. Expected list, got associative array', $path));
+                }
 
                 self::assertCount(
                     \count($expected),
@@ -59,40 +45,65 @@ final class PhpUnitTool extends TestCase
                 );
 
                 foreach ($expected as $i => $expItem) {
-                    $newPath = \sprintf('%s[%d]', $path, $i);
 
                     if (!\array_key_exists($i, $actual)) {
                         self::fail(\sprintf('Missing index %d at %s', $i, $path));
                     }
 
-                    self::compare($actual[$i], $expItem, $newPath);
+                    self::compare(
+                        $actual[$i],
+                        $expItem,
+                        \sprintf('%s[%d]', $path, $i),
+                        $strict
+                    );
                 }
 
                 return;
             }
 
-            /**
-             * ASSOCIATIVE ARRAY.
-             */
-            foreach ($expected as $key => $expValue) {
+            // ASSOCIATIVE ARRAY
+            if ($strict) {
+                self::assertNoExtraKeys($actual, $expected, $path);
+            }
 
-                $newPath = \sprintf('%s.%s', $path, $key);
+            foreach ($expected as $key => $expValue) {
 
                 if (!\array_key_exists($key, $actual)) {
                     self::fail(\sprintf("Missing key '%s' at %s", $key, $path));
                 }
 
-                self::compare($actual[$key], $expValue, $newPath);
+                self::compare(
+                    $actual[$key],
+                    $expValue,
+                    \sprintf('%s.%s', $path, $key),
+                    $strict
+                );
             }
 
             return;
         }
 
+        // SCALAR strict compare
         if ($actual !== $expected) {
             self::fail(
                 \sprintf('Value mismatch at %s%s', $path, PHP_EOL).
                 'Expected: '.\var_export($expected, true)."\n".
                 'Actual: '.\var_export($actual, true)
+            );
+        }
+    }
+
+    /**
+     * @param mixed[] $actual
+     * @param mixed[] $expected
+     */
+    private static function assertNoExtraKeys(array $actual, array $expected, string $path): void
+    {
+        $extraKeys = \array_diff(\array_keys($actual), \array_keys($expected));
+
+        if ([] !== $extraKeys) {
+            self::fail(
+                \sprintf('Unexpected keys at %s: ', $path).\implode(', ', $extraKeys)
             );
         }
     }
