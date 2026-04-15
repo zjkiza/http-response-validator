@@ -101,8 +101,8 @@ All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` 
 - `HttpResponseLoggerHandler`
   - What it does: Validates the expected HTTP status, logs the response, and masks the values for the defined keys in the body
   - Essential methods:
-    - `setExpectedStatus(int $status): self`
-    - `addSensitiveKeys(string[] $keys): self`
+    - `setExpectedStatus(int $status): self` - set the expected HTTP status code (ex. 201, 404...). Default is 200.
+    - `addSensitiveKeys(string[] $keys): self` - add keys to be masked in the logged response body (ex. 'password', 'token'). Masking replaces the value with '***' in logs.
 
 - `ExtractResponseJsonHandler`
   - What it does: calls `$response->getContent(false)`, decodes the JSON, and returns the result as a string or object
@@ -114,19 +114,19 @@ All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` 
   - Essential methods:
     - `setKeys(array $structure): self` – associative or indexed array describing expected structure
     - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set
-    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types
+    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...). 
 
 - `ArrayStructureValidateInternalHandler`
   - What it does: Validates array structure with more internally permissive (flexible) rules, suitable for partial checks.
   - Essential methods:
-    - `setKeys(array $structure): self`
-    - `setIgnoreNulls(bool $ignoreNulls = false): self`
-    - `setCheckTypes(bool $checkTypes = false): self`
+    - `setKeys(array $structure): self` – associative or indexed array describing expected structure
+    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set
+    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...).
 
 ## Direct Use: ArrayStructureExactValidation and ArrayStructureInternalValidation
 
 Validation services can be used standalone without the handler pipeline.
-For example, to validate data against a strict structure with type (string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string').
+For example, to validate data against a strict structure with type (string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...).
 
 ```php
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureExactValidation;
@@ -167,12 +167,85 @@ $data = Result::success($response)
         ->setKeys([
             'id' => 'int|string', 
             'email' => 'string',
+            'addresses' => 'string[]', // array of strings
         ])
         ->setCheckTypes(true)
         ->setIgnoreNulls(false)
     )
     ->getOrThrow();
 ```
+Example for data 
+
+```php
+       $data = [
+            'args' => [
+                'test' => '123',
+            ],
+            'headers' => [
+                'host' => 'postman-echo.com',
+                'dnt' => 1.23,
+                'foo' => 'bool',
+                'ad' => [
+                    'bb' => [],
+                    'cc' => new class () {
+                    },
+                    'dd' => null,
+                ],
+            ],
+            'body' => [
+                'items' => [
+                    [
+                        'name' => 'name1',
+                        'age' => 20,
+                    ],
+                    [
+                        'name' => 'name2',
+                        'age' => 22,
+                    ],
+                ],
+                'errors' => [
+                    'error 1',
+                    'error 2',
+                    'error 3',
+                ],
+            ],
+        ];
+```
+The validation would look like
+
+```php
+    ... 
+    ->bind($this->handlerFactory->create(ArrayStructureValidateExactHandler::class)
+        ->setKeys([
+            'args' => [
+                'test' => 'string',
+            ],
+            'headers' => [
+                'host' => 'string',
+                'dnt' => 'float',
+                'foo' => true,
+                'ad' => [
+                    'bb' => 'array',
+                    'cc' => 'object',
+                    'dd' => 'null',
+                ],
+            ],
+            'body' => [
+                'items' => [
+                    '*' => [
+                        'name' => 'string',
+                        'age' => 'int',
+                    ],
+                ],
+                'errors' => 'string[]'
+            ],
+        ])
+        ->setCheckTypes(true)
+        ->setIgnoreNulls(false)
+    )
+    ...
+```
+
 
 ## How to add your own Handler
 

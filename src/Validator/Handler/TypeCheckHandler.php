@@ -21,6 +21,26 @@ final class TypeCheckHandler implements StructureValidationHandlerInterface
 
         $actualValue = $data[$key];
 
+        // expectedType[] case
+        if (\is_array($actualValue) && \str_ends_with($expected, '[]')) {
+            $innerType = \substr($expected, 0, -2);
+
+            foreach ($actualValue as $index => $item) {
+                if (!$context->typeChecker::isValid($innerType, $item)) {
+                    $errorCollector->add(\sprintf(
+                        'Key "%s.%s[%s]" expects type "%s", got "%s"',
+                        $currentPath,
+                        $key,
+                        $index,
+                        $innerType,
+                        \gettype($item)
+                    ));
+                }
+            }
+
+            return true;
+        }
+
         $expectedTypes = \explode('|', $expected);
 
         $errorTypes = [];

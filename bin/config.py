@@ -17,8 +17,7 @@ docker_compose_files_list: list[str] = [
 
 commands: dict[str, str] = {
     'composer install': 'composer install',
-    'composer run phpunit': 'composer run phpunit-ci',
+    'composer run phpunit': 'composer run phpunit',
     'composer run phpstan': 'composer run phpstan',
     'composer run psalm': 'composer run psalm',
-    'composer run phpmd': 'composer run phpmd',
 }

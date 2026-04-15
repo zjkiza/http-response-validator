@@ -8,6 +8,8 @@ ARG PHP_XDEBUG_REMOTE_PORT=9003
 ARG PHP_XDEBUG_REMOTE_ADDRESS=host.docker.internal
 ARG PHP_XDEBUG_IDEKEY=PHPSTORM
 ARG PHP_IDE_CONFIG="serverName=localhost"
+ARG UID=1000
+ARG GID=1000
 
 ENV TZ=${SYSTEM_TIMEZONE} \
     COMPOSER_ALLOW_SUPERUSER=1 \
@@ -15,7 +17,7 @@ ENV TZ=${SYSTEM_TIMEZONE} \
     PATH=/composer/vendor/bin:$PATH \
     PHP_XDEBUG_ENABLE=${PHP_XDEBUG_ENABLE} \
     PHP_XDEBUG_MODE=${PHP_XDEBUG_MODE} \
-    PHP_XDEBUG_REMOTE_PORT=${PHP_XDEBUG_REMOTE_PORT}\
+    PHP_XDEBUG_REMOTE_PORT=${PHP_XDEBUG_REMOTE_PORT} \
     PHP_XDEBUG_REMOTE_ADDRESS=${PHP_XDEBUG_REMOTE_ADDRESS} \
     PHP_XDEBUG_IDEKEY=${PHP_XDEBUG_IDEKEY} \
     PHP_IDE_CONFIG=${PHP_IDE_CONFIG} \
@@ -28,10 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     openssl \
     openssh-client \
-    postgresql-client \
     gettext-base \
-    libpng-dev \
-    libjpeg-dev \
     libfreetype6-dev \
     libzip-dev \
     libpq-dev \
@@ -43,19 +42,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xsltproc \
     net-tools \
     nano \
+ && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
- && docker-php-ext-configure intl \
+RUN docker-php-ext-configure intl \
  && docker-php-ext-install -j$(nproc) \
     bcmath \
     exif \
     gd \
     gettext \
     intl \
-    pdo \
-    pdo_mysql \
-    mysqli \
     zip \
     soap \
     simplexml \
@@ -72,18 +68,27 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
  && echo ${TZ} > /etc/timezone
 
 #   Add GitHub to known hosts
-RUN mkdir -p /root/.ssh \
- && chmod 700 /root/.ssh \
- && ssh-keyscan github.com >> /root/.ssh/known_hosts
+#RUN mkdir -p /root/.ssh \
+# && chmod 700 /root/.ssh \
+# && ssh-keyscan -H github.com >> /root/.ssh/known_hosts
 
 COPY docker/php/conf /tmp
 RUN chmod +x /tmp/configure.sh && /tmp/configure.sh && rm -rf /tmp/*
-
-WORKDIR /www
-COPY --chown=${LOCAL_USER} . /www
 
 #   Holds a raised container
 COPY docker/php/cmd.sh /usr/local/bin/cmd.sh
 RUN chmod +x /usr/local/bin/cmd.sh
 
-CMD ["/bin/bash", "-c", "/usr/local/bin/cmd.sh"]
+RUN groupadd -g ${GID} app \
+ && useradd -u ${UID} -g app -m app
+
+USER app
+
+WORKDIR /www
+
+COPY --chown=app:app composer.json composer.lock ./
+RUN composer install --no-scripts --no-autoloader
+COPY --chown=app:app . .
+RUN composer dump-autoload --optimize
+
+CMD ["/usr/local/bin/cmd.sh"]

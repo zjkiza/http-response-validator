@@ -9,3 +9,4 @@ build
 .phpunit.cache
 .php-cs-fixer.cache
 .phpunit.result.cache
+tests/Resources/var/*

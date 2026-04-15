@@ -93,6 +93,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         'age' => 'int',
                     ],
                 ],
+                'errors' => 'string[]',
             ],
         ];
 
@@ -122,7 +123,11 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         'age' => 22,
                     ],
                 ],
-
+                'errors' => [
+                    'error 1',
+                    'error 2',
+                    'error 3',
+                ],
             ],
         ];
 
@@ -196,11 +201,16 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             'args' => [
                 'test' => 'string|bool|null',
             ],
+            'items' => 'int[]',
         ];
 
         $data = [
             'args' => [
                 'test' => '123',
+            ],
+            'items' => [
+                11,
+                22,
             ],
         ];
 
@@ -267,7 +277,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                 'ad' => [
                     'bb' => 'array',
                     'cc' => 'string',
-
+                    'ee' => 'string[]',
                 ],
             ],
             'body' => [
@@ -292,6 +302,11 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                     'cc' => new class () {
                     },
                     'dd' => null,
+                    'ee' => [
+                        'lorem',
+                        'ipsum',
+                        22,
+                    ],
                 ],
             ],
             'body' => [
@@ -316,6 +331,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         $expected = [
             'Missing required key "root.headers.bar"',
             'Key "root.headers.ad.cc" expects type "string", got "object"',
+            'Key "root.headers.ad.ee[2]" expects type "string", got "integer"',
         ];
 
         $this->assertSame($expected, $validator->getErrorCollector()->all());
@@ -327,11 +343,18 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             'args' => [
                 'test' => 'int|bool|null',
             ],
+            'numbers' => 'float[]',
         ];
 
         $data = [
             'args' => [
                 'test' => '123',
+            ],
+            'numbers' => [
+                12.56,
+                22.33,
+                44.45,
+                44,
             ],
         ];
 
@@ -341,6 +364,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
 
         $expected = [
             'Key "root.args.test" expects type "int|bool|null", got "string"',
+            'Key "root.numbers[3]" expects type "float", got "integer"',
         ];
 
         $this->assertSame($expected, $validator->getErrorCollector()->all());
