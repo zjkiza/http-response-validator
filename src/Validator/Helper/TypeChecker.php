@@ -4,8 +4,21 @@ declare(strict_types=1);
 
 namespace ZJKiza\HttpResponseValidator\Validator\Helper;
 
+use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
+
 final class TypeChecker
 {
+    private const SUPPORTED_TYPES = [
+        'string',
+        'int',
+        'float',
+        'bool',
+        'array',
+        'object',
+        'null',
+        'mixed',
+    ];
+
     public static function isValid(string $expectedType, mixed $value): bool
     {
         // expectedType[]
@@ -15,6 +28,10 @@ final class TypeChecker
             }
 
             $innerType = \substr($expectedType, 0, -2);
+
+            if (!\in_array($innerType, self::SUPPORTED_TYPES, true)) {
+                throw new InvalidArgumentException(\sprintf('Unsupported type "%s" in expected type "%s".', $innerType, $expectedType));
+            }
 
             foreach ($value as $item) {
                 if (!self::isValid($innerType, $item)) {
@@ -34,7 +51,7 @@ final class TypeChecker
             'object' => \is_object($value),
             'null' => \is_null($value),
             'mixed' => true,
-            default => true, // unknown type = don't enforce
+            default => throw new InvalidArgumentException(\sprintf('Unsupported type "%s" in expected types "%s".', $expectedType, \implode(',', self::SUPPORTED_TYPES))),
         };
     }
 }

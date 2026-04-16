@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.2]
+Added
+- Throwing exception `InvalidArgumentException` if check type is not supported or entered incorrectly.
+- Unit tests.
+Fixed
+- documentation
+
 ## [0.11.1]
 Fixed
 - Docker for development.

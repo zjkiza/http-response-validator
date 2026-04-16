@@ -2,7 +2,7 @@
 
 A Symfony bundle for HTTP responses validating using a simple Result monad and handler chains.
 
-The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`), then through a series of handlers (pipelines) the status code is validated, the content is logged, JSON is extracted and the structure is checked. Each handler returns a `Result', so the chain breaks on the first error and throws an exception with a unique message ID.
+The main idea: the input is `ResponseInterface` (eg from `symfony/http-client`), then through a series of handlers (pipelines) the status code is validated, the content is logged, JSON is extracted and the structure is checked. Each handler returns a 'Result', so the chain breaks on the first error and throws an exception with a unique message ID.
 
 For unit testing, you can use the `PhpUnitTool` to easily test handlers in isolation with custom inputs and expected outputs.
 
@@ -10,12 +10,12 @@ For unit testing, you can use the `PhpUnitTool` to easily test handlers in isola
 
 - Declarative stacking steps over `Result::success(...)->bind(...)`
 - Built-in ready-to-use handlers:
-  - `ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler` – validates the expected status, logs the response, and masks sensitive keys
-  - `ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler` – decodes the JSON body (associatively or as an object)
-  - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler` – validates the structure of the response using strict/exact key and type checking
-  - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateInternalHandler` – validates the structure using internal/relaxed rules for key existence and potential type checking
-- Simple extension: add your own handler and register it with a single service tag
-- Clear error messages with `Message ID=<hex>` for easy tracking in logs
+  - `ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler` – validates the expected status, logs the response, and masks sensitive keys.
+  - `ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler` – decodes the JSON body (associatively or as an object).
+  - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler` – validates the structure of the response using strict/exact key and type checking.
+  - `ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateInternalHandler` – validates the structure using internal/relaxed rules for key existence and potential type checking.
+- Simple extension: add your own handler and register it with a single service tag.
+- Clear error messages with `Message ID=<hex>` for easy tracking in logs.
 - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait` enables simple and flexible testing of array structure and values (ex. API response) in PHPUnit tests.
   - `assertArrayStructureAndValues(array $expected, array $actual)` – asserts that the actual array has the same structure and values as the expected array, allowing for flexible matching (e.g., ignoring extra keys in the actual array).
   - `assertArrayStrictStructureAndValues(array $expected, array $actual)` – asserts that the actual array has the exact same structure and values as the expected array, including the same keys and values, without allowing for any extra keys in the actual array.
@@ -23,7 +23,7 @@ For unit testing, you can use the `PhpUnitTool` to easily test handlers in isola
   - structure check, 
   - value check, 
   - strict and non-strict mode, 
-  - custom validators (callable)
+  - custom validators (callable).
   
 ## Installation
 
@@ -99,28 +99,28 @@ If a step fails, an exception will be thrown with a message containing a unique 
 All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` and expose a fluent API for configuration.
 
 - `HttpResponseLoggerHandler`
-  - What it does: Validates the expected HTTP status, logs the response, and masks the values for the defined keys in the body
+  - What it does: Validates the expected HTTP status, logs the response, and masks the values for the defined keys in the body.
   - Essential methods:
     - `setExpectedStatus(int $status): self` - set the expected HTTP status code (ex. 201, 404...). Default is 200.
     - `addSensitiveKeys(string[] $keys): self` - add keys to be masked in the logged response body (ex. 'password', 'token'). Masking replaces the value with '***' in logs.
 
 - `ExtractResponseJsonHandler`
-  - What it does: calls `$response->getContent(false)`, decodes the JSON, and returns the result as a string or object
+  - What it does: calls `$response->getContent(false)`, decodes the JSON, and returns the result as a string or object.
   - Essential methods:
-    - `setAssociative(bool $assoc = true): self` – when `true` returns an associative array; when `false` is an object
+    - `setAssociative(bool $assoc = true): self` – when `true` returns an associative array; when `false` is an object.
 
 - `ArrayStructureValidateExactHandler`
-  - What it does: Validates array structure with **exact** match: same keys as expected, possible deep (nested), optional type checks
+  - What it does: Validates array structure with **exact** match: same keys as expected, possible deep (nested), optional type checks.
   - Essential methods:
-    - `setKeys(array $structure): self` – associative or indexed array describing expected structure
-    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set
+    - `setKeys(array $structure): self` – associative or indexed array describing expected structure.
+    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set. If a key/keys is defined in the structure but the value is null, it will be ignored and not treated as an error.
     - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...). 
 
 - `ArrayStructureValidateInternalHandler`
   - What it does: Validates array structure with more internally permissive (flexible) rules, suitable for partial checks.
   - Essential methods:
-    - `setKeys(array $structure): self` – associative or indexed array describing expected structure
-    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set
+    - `setKeys(array $structure): self` – associative or indexed array describing expected structure.
+    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set. If a key/keys is defined in the structure but the value is null, it will be ignored and not treated as an error.
     - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...).
 
 ## Direct Use: ArrayStructureExactValidation and ArrayStructureInternalValidation
@@ -321,8 +321,8 @@ class ApiTest extends TestCase
 1. `assertArrayStructureAndValues(array $actual, array $expected)`
 
 Partial match (not strict)
-- additional keys are allowed in $actual
-- only checks what is defined in $expected
+- additional keys are allowed in $actual,
+- only checks what is defined in $expected.
 
 Exsample: 
 ```php
@@ -334,13 +334,13 @@ $this->assertArrayStructureAndValues(
     ]
 );
 ```
-passes if $actual has more fields (eg id, createdAt, etc.)
+passes if $actual has more fields (ex. id, createdAt, etc.)
 
 2. `assertArrayStrictStructureAndValues(array $actual, array $expected)`
 
 Strict match
-- additional keys are NOT allowed in $actual
-- checks that $actual has exactly the same keys and values as $expected
+- additional keys are NOT allowed in $actual,
+- checks that `$actual` has exactly the same keys and values as `$expected`.
 
 ```php
 $this->assertArrayStrictStructureAndValues(
@@ -351,7 +351,7 @@ $this->assertArrayStrictStructureAndValues(
     ]
 );
 ```
-must be exactly identical (except for the order in the associative array)
+must be exactly identical (except for the order in the associative array).
 
 ### Rules of conduct
 
@@ -401,9 +401,9 @@ $this->assertArrayStrictStructureAndValues(
 
 ### Notice
 
-- The trait must be used in a class that inherits from `PHPUnit\Framework\TestCase`
-- `assertArrayStructureAndValues` allows additional keys
-- `assertArrayStrictStructureAndValues` requires an exact match
+- The trait must be used in a class that inherits from `PHPUnit\Framework\TestCase`,
+- `assertArrayStructureAndValues` allows additional keys,
+- `assertArrayStrictStructureAndValues` requires an exact match.
 
 
 ## Logging in and message ID
