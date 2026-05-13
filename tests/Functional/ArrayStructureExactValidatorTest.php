@@ -75,6 +75,8 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
         $structure = [
             'args' => [
                 'test' => 'int|null|string',
+                'test-empty-string' => 'string',
+                'filled' => 'non-empty-string',
             ],
             'headers' => [
                 'host' => 'string',
@@ -93,12 +95,16 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
                         'age' => 'int',
                     ],
                 ],
+                'errors' => 'string[]',
+                'errors-not-empty-string' => 'non-empty-string[]',
             ],
         ];
 
         $data = [
             'args' => [
                 'test' => '123',
+                'test-empty-string' => '',
+                'filled' => 'content',
             ],
             'headers' => [
                 'host' => 'postman-echo.com',
@@ -118,11 +124,20 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
                         'age' => 20,
                     ],
                     [
-                        'name' => 'name2',
+                        'name' => '',
                         'age' => 22,
                     ],
                 ],
-
+                'errors' => [
+                    'error 1',
+                    '',
+                    'error 3',
+                ],
+                'errors-not-empty-string' => [
+                    'error 1',
+                    'error 2',
+                    'error 3',
+                ],
             ],
         ];
 
@@ -138,6 +153,7 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
         $data = [
             'args' => [
                 'test_string' => 123,
+                'test_non_empty_string' => '',
                 'test_int' => '123',
                 'test_float' => '123',
                 'test_bool' => '123',
@@ -150,6 +166,7 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
         $structure = [
             'args' => [
                 'test_string' => 'string|null',
+                'test_non_empty_string' => 'non-empty-string',
                 'test_int' => 'int|float',
                 'test_float' => 'float',
                 'test_bool' => 'bool',
@@ -165,6 +182,7 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
 
         $expected = [
             'Key "root.args.test_string" expects type "string|null", got "integer"',
+            'Key "root.args.test_non_empty_string" expects type "non-empty-string", got "string"',
             'Key "root.args.test_int" expects type "int|float", got "string"',
             'Key "root.args.test_float" expects type "float", got "string"',
             'Key "root.args.test_bool" expects type "bool", got "string"',
@@ -251,7 +269,6 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
                 'ad' => [
                     'bb' => 'array',
                     'cc' => 'string',
-
                 ],
             ],
             'body' => [
@@ -260,6 +277,8 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
                         'name' => 'string',
                     ],
                 ],
+                'errors' => 'string[]',
+                'errors-not-empty-string' => 'non-empty-string[]',
             ],
         ];
 
@@ -289,7 +308,16 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
                         'age' => 22,
                     ],
                 ],
-
+                'errors' => [
+                    'error 1',
+                    '',
+                    'error 3',
+                ],
+                'errors-not-empty-string' => [
+                    'error 1',
+                    '',
+                    'error 3',
+                ],
             ],
         ];
 
@@ -302,6 +330,7 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
             'Exact key mismatch at "root.headers.ad". Expected: ["bb","cc"], got: ["bb","cc","dd"]',
             'Key "root.headers.ad.cc" expects type "string", got "object"',
             'Exact key mismatch at "root.body.items.*". Expected: ["name"], got: ["age","name"]',
+            'Key "root.body.errors-not-empty-string[1]" expects type "non-empty-string", got "string"',
         ];
 
         $this->assertSame($expected, $validator->getErrorCollector()->all());

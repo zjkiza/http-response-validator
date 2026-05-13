@@ -121,12 +121,12 @@ All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` 
   - Essential methods:
     - `setKeys(array $structure): self` – associative or indexed array describing expected structure.
     - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set. If a key/keys is defined in the structure but the value is null, it will be ignored and not treated as an error.
-    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...).
+    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, non-empty-string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], non-empty-string[], float[]...).
 
 ## Direct Use: ArrayStructureExactValidation and ArrayStructureInternalValidation
 
 Validation services can be used standalone without the handler pipeline.
-For example, to validate data against a strict structure with type (string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...).
+For example, to validate data against a strict structure with type (string, non-empty-string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], non-empty-string[], float[]...).
 
 ```php
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureExactValidation;
@@ -205,8 +205,12 @@ Example for data
                 ],
                 'errors' => [
                     'error 1',
-                    'error 2',
+                    '',
                     'error 3',
+                ],
+                'messages' => [
+                    'foo'
+                    'bar'
                 ],
             ],
         ];
@@ -238,6 +242,7 @@ The validation would look like
                     ],
                 ],
                 'errors' => 'string[]'
+                'messages' => 'non-empty-string[]'
             ],
         ])
         ->setCheckTypes(true)

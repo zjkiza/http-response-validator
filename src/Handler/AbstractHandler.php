@@ -43,10 +43,13 @@ abstract class AbstractHandler
             $overrideMessage
         );
 
-        $this->logger->error($loggerMessage, ['trace' => $backtrace]);
-
         $ref = new \ReflectionProperty($exception, 'message');
         $ref->setValue($exception, $overrideMessage);
+
+        $this->logger->error($loggerMessage, [
+            'trace' => $backtrace,
+            'exception' => $exception,
+        ]);
 
         /** @psalm-suppress LessSpecificReturnStatement */
         return Result::failure($loggerMessage, $exception);

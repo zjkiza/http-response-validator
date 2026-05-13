@@ -82,6 +82,8 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             [
                 'args' => [
                     'test' => 'string',
+                    'empty-string' => 'string',
+                    'filled-string' => 'non-empty-string',
                 ],
                 'headers' => [
                     'host' => 'string',
@@ -101,11 +103,14 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         ],
                     ],
                     'errors' => 'string[]',
+                    'errors-not-empty-string' => 'non-empty-string[]',
                 ],
             ],
             [
                 'args' => [
                     'test' => '123',
+                    'empty-string' => '',
+                    'filled-string' => 'filled',
                 ],
                 'headers' => [
                     'host' => 'postman-echo.com',
@@ -130,6 +135,11 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         ],
                     ],
                     'errors' => [
+                        'error 1',
+                        '',
+                        'error 3',
+                    ],
+                    'errors-not-empty-string' => [
                         'error 1',
                         'error 2',
                         'error 3',
@@ -177,6 +187,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             [
                 'args' => [
                     'test_string' => 'string',
+                    'test_non_empty_string' => 'non-empty-string',
                     'test_int' => 'int',
                     'test_float' => 'float',
                     'test_bool' => 'bool',
@@ -188,6 +199,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             [
                 'args' => [
                     'test_string' => 123,
+                    'test_non_empty_string' => '',
                     'test_int' => '123',
                     'test_float' => '123',
                     'test_bool' => '123',
@@ -198,6 +210,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             ],
             [
                 'Key "root.args.test_string" expects type "string", got "integer"',
+                'Key "root.args.test_non_empty_string" expects type "non-empty-string", got "string"',
                 'Key "root.args.test_int" expects type "int", got "string"',
                 'Key "root.args.test_float" expects type "float", got "string"',
                 'Key "root.args.test_bool" expects type "bool", got "string"',
@@ -219,6 +232,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         'bb' => 'array',
                         'cc' => 'string',
                         'ee' => 'string[]',
+                        'ff' => 'non-empty-string[]',
                     ],
                 ],
             ],
@@ -234,8 +248,13 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                         'dd' => null,
                         'ee' => [
                             'lorem',
-                            'ipsum',
+                            '',
                             22,
+                        ],
+                        'ff' => [
+                            'foo',
+                            '',
+                            'bar',
                         ],
                     ],
                 ],
@@ -244,6 +263,7 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
                 'Missing required key "root.headers.bar"',
                 'Key "root.headers.ad.cc" expects type "string", got "object"',
                 'Key "root.headers.ad.ee[2]" expects type "string", got "integer"',
+                'Key "root.headers.ad.ff[1]" expects type "non-empty-string", got "string"',
             ],
             true,
             true,

@@ -67,11 +67,6 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime \
  && echo ${TZ} > /etc/timezone
 
-#   Add GitHub to known hosts
-#RUN mkdir -p /root/.ssh \
-# && chmod 700 /root/.ssh \
-# && ssh-keyscan -H github.com >> /root/.ssh/known_hosts
-
 COPY docker/php/conf /tmp
 RUN chmod +x /tmp/configure.sh && /tmp/configure.sh && rm -rf /tmp/*
 

@@ -10,6 +10,7 @@ final class TypeChecker
 {
     private const SUPPORTED_TYPES = [
         'string',
+        'non-empty-string',
         'int',
         'float',
         'bool',
@@ -44,6 +45,7 @@ final class TypeChecker
 
         return match ($expectedType) {
             'string' => \is_string($value),
+            'non-empty-string' => \is_string($value) && '' !== $value,
             'int' => \is_int($value),
             'float' => \is_float($value),
             'bool' => \is_bool($value),

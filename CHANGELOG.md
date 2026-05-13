@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.3]
+Added
+- Added non-empty string type support.
+- Unit tests.
+Fixed
+- Error is logged after adding "Message ID".
+
 ## [0.11.2]
 Added
 - Throwing exception `InvalidArgumentException` if check type is not supported or entered incorrectly.
