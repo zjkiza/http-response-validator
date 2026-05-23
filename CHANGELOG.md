@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0]
+Added
+- Added typed expected-type API usage across validators and handlers using:
+  - `ZJKiza\HttpResponseValidator\Enum\TypeCheck`
+  - `ZJKiza\HttpResponseValidator\Validator\Type\ArrayOfExpectedType`
+  - `ZJKiza\HttpResponseValidator\Validator\Type\UnionExpectedType`
+- Added/expanded PHPUnit helper usage for:
+  - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::assertArrayStructure`
+  - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::arrayStructureExact`
+- Added and expanded unit tests for validator/type handling and logging components.
+
+Optimization
+- Refactored and optimized validation/type-checking flow (strategy-based handling and helper decomposition).
+- Refactored HTTP logger internals into focused components while preserving public behavior.
+
+Documentation
+- Updated README with typed expected-type guidance and null/type interaction details.
+- Documented legacy compatibility rules and PHPUnit helper usage.
+
+Compatibility
+- Legacy string-based type declarations remain supported for the full `0.12.x` line and are planned for removal in a future major release.
+
 ## [0.11.3]
 Added
 - Added non-empty string type support.

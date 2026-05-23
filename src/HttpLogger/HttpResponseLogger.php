@@ -6,22 +6,12 @@ namespace ZJKiza\HttpResponseValidator\HttpLogger;
 
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Contracts\HttpClient\ResponseInterface;
-use ZJKiza\HttpResponseValidator\Exception\RuntimeException;
 
 use function ZJKiza\HttpResponseValidator\addIdInMessage;
 
 final class HttpResponseLogger
 {
-    public const HTTP_BAD_REQUEST = 400;
-    public const HTTP_UNAUTHORIZED = 401;
-    public const HTTP_FORBIDDEN = 403;
-    public const HTTP_NOT_FOUND = 404;
-
     /**
      * @var array<string, string>
      */
@@ -31,8 +21,13 @@ final class HttpResponseLogger
         'apiKey' => 'apiKey',
     ];
 
+    private readonly ResponseBodyFormatter $responseBodyFormatter;
+    private readonly HttpExceptionFactory $httpExceptionFactory;
+
     public function __construct(private readonly LoggerInterface $logger)
     {
+        $this->responseBodyFormatter = new ResponseBodyFormatter();
+        $this->httpExceptionFactory = new HttpExceptionFactory();
     }
 
     public function validateResponse(ResponseInterface $response, int $expected = Response::HTTP_OK): void
@@ -52,11 +47,7 @@ final class HttpResponseLogger
             ['http_request_failed' => $this->httpRequestFailed($response)]
         );
 
-        $this->throwHttpException(
-            $statusCode,
-            $message,
-            $messageId,
-        );
+        throw $this->httpExceptionFactory->create($statusCode, $message, $messageId);
     }
 
     /**
@@ -96,50 +87,7 @@ final class HttpResponseLogger
             'code' => isset($info['http_code']) && \is_int($info['http_code'])
                 ? $info['http_code']
                 : $response->getStatusCode(),
-            'body' => $this->formatJsonContent($response->getContent(false)),
+            'body' => $this->responseBodyFormatter->format($response->getContent(false), $this->sensitiveKeys),
         ];
-    }
-
-    private function throwHttpException(int $statusCode, string $message, string $messageId): void
-    {
-        match ($statusCode) {
-            self::HTTP_BAD_REQUEST => throw new BadRequestHttpException(\sprintf('%s %s', $messageId, 'Bad request.')),
-            self::HTTP_UNAUTHORIZED => throw new UnauthorizedHttpException("Bearer realm='API'", \sprintf('%s %s', $messageId, 'Invalid credentials')),
-            self::HTTP_FORBIDDEN => throw new AccessDeniedHttpException(\sprintf('%s %s', $messageId, 'Access denied.')),
-            self::HTTP_NOT_FOUND => throw new NotFoundHttpException(\sprintf('%s %s', $messageId, 'Not found.')),
-            default => throw new RuntimeException($message, $statusCode),
-        };
-    }
-
-    private function formatJsonContent(string $content): string
-    {
-        try {
-            /** @var array<string, mixed> $decoded */
-            $decoded = \json_decode($content, true, 512, JSON_THROW_ON_ERROR);
-            $encoded = \json_encode($this->maskSensitiveData($decoded), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-
-            return \is_string($encoded) ? $encoded : $content;
-        } catch (\Throwable) {
-            return $content;
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     *
-     * @return array<string, mixed>
-     */
-    private function maskSensitiveData(array $data): array
-    {
-        foreach ($data as $key => $value) {
-            if (isset($this->sensitiveKeys[$key])) {
-                $data[$key] = '***';
-            } elseif (\is_array($value)) {
-                /** @var array<string, mixed> $value */
-                $data[$key] = $this->maskSensitiveData($value);
-            }
-        }
-
-        return $data;
     }
 }

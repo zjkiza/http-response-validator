@@ -8,6 +8,7 @@ use PHPUnit\Framework\Constraint\RegularExpression;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use ZJKiza\HttpResponseValidator\Contract\HandlerFactoryInterface;
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
 use ZJKiza\HttpResponseValidator\Exception\RuntimeException;
 use ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler;
@@ -296,14 +297,14 @@ final class HttpResponseValidatorTest extends KernelTestCase
 
         $structure = [
             'args' => [
-                'test' => 'string',
+                'test' => TypeCheck::STRING,
             ],
             'headers' => [
-                'host' => 'string',
-                'dnt' => 'string',
-                'foo' => 'string',
+                'host' => TypeCheck::STRING,
+                'dnt' => TypeCheck::STRING,
+                'foo' => TypeCheck::STRING,
                 'bar' => [
-                    'barKey1' => 'string',
+                    'barKey1' => TypeCheck::STRING,
                 ],
             ],
         ];

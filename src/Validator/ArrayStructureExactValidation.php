@@ -6,6 +6,7 @@ namespace ZJKiza\HttpResponseValidator\Validator;
 
 use ZJKiza\HttpResponseValidator\Contract\StructureValidationHandlerInterface;
 use ZJKiza\HttpResponseValidator\Contract\ValidationStrategy;
+use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
 use ZJKiza\HttpResponseValidator\Validator\Helper\RecursiveDescent;
 use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker;
@@ -101,8 +102,11 @@ final readonly class ArrayStructureExactValidation implements ValidationStrategy
 
         foreach ($structure as $key => $value) {
             if (\is_int($key)) {
-                /** @var string $value */
-                $normalized[$value] = true;
+                if (!\is_scalar($value) && !$value instanceof \Stringable) {
+                    throw new InvalidArgumentException('Expected a scalar or Stringable value.');
+                }
+
+                $normalized[(string) $value] = true;
                 continue;
             }
             $normalized[$key] = $value;

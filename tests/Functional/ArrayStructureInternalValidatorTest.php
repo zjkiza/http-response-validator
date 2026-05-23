@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace ZJKiza\HttpResponseValidator\Tests\Functional;
 
 use PHPUnit\Framework\Attributes\DataProvider;
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
 use ZJKiza\HttpResponseValidator\Tests\Resources\KernelTestCase;
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureInternalValidation;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
 
 final class ArrayStructureInternalValidatorTest extends KernelTestCase
 {
@@ -81,29 +83,29 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         yield 'Type and key verification' => [
             [
                 'args' => [
-                    'test' => 'string',
-                    'empty-string' => 'string',
-                    'filled-string' => 'non-empty-string',
+                    'test' => TypeCheck::STRING,
+                    'empty-string' => TypeCheck::STRING,
+                    'filled-string' => TypeCheck::NON_EMPTY_STRING,
                 ],
                 'headers' => [
-                    'host' => 'string',
-                    'dnt' => 'string|float',
+                    'host' => TypeCheck::STRING,
+                    'dnt' => ExpectedTypes::union(TypeCheck::STRING, TypeCheck::FLOAT),
                     'foo' => true,
                     'ad' => [
-                        'bb' => 'array',
-                        'cc' => 'object',
-                        'dd' => 'null',
+                        'bb' => TypeCheck::ARRAY,
+                        'cc' => TypeCheck::OBJECT,
+                        'dd' => TypeCheck::NULL,
                     ],
                 ],
                 'body' => [
                     'items' => [
                         '*' => [
-                            'name' => 'string',
-                            'age' => 'int',
+                            'name' => TypeCheck::STRING,
+                            'age' => TypeCheck::INT,
                         ],
                     ],
-                    'errors' => 'string[]',
-                    'errors-not-empty-string' => 'non-empty-string[]',
+                    'errors' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+                    'errors-not-empty-string' => ExpectedTypes::arrayOf(TypeCheck::NON_EMPTY_STRING),
                 ],
             ],
             [
@@ -166,9 +168,9 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         yield 'Withe expected types and ignore nulls set to false' => [
             [
                 'args' => [
-                    'test' => 'string|bool|null',
+                    'test' => ExpectedTypes::union(TypeCheck::STRING, TypeCheck::BOOL, TypeCheck::NULL),
                 ],
-                'items' => 'array|null',
+                'items' => ExpectedTypes::union(TypeCheck::ARRAY, TypeCheck::NULL),
             ],
             [
                 'args' => [
@@ -186,14 +188,14 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         yield 'When validation type is incorrected' => [
             [
                 'args' => [
-                    'test_string' => 'string',
-                    'test_non_empty_string' => 'non-empty-string',
-                    'test_int' => 'int',
-                    'test_float' => 'float',
-                    'test_bool' => 'bool',
-                    'test_array' => 'array',
-                    'test_object' => 'object',
-                    'test_null' => 'null',
+                    'test_string' => TypeCheck::STRING,
+                    'test_non_empty_string' => TypeCheck::NON_EMPTY_STRING,
+                    'test_int' => TypeCheck::INT,
+                    'test_float' => TypeCheck::FLOAT,
+                    'test_bool' => TypeCheck::BOOL,
+                    'test_array' => TypeCheck::ARRAY,
+                    'test_object' => TypeCheck::OBJECT,
+                    'test_null' => TypeCheck::NULL,
                 ],
             ],
             [
@@ -225,14 +227,14 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         yield 'With check type, missing key and wrong type' => [
             [
                 'headers' => [
-                    'host' => 'string',
-                    'bar' => 'string',
+                    'host' => TypeCheck::STRING,
+                    'bar' => TypeCheck::STRING,
                     'foo' => true,
                     'ad' => [
-                        'bb' => 'array',
-                        'cc' => 'string',
-                        'ee' => 'string[]',
-                        'ff' => 'non-empty-string[]',
+                        'bb' => TypeCheck::ARRAY,
+                        'cc' => TypeCheck::STRING,
+                        'ee' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+                        'ff' => ExpectedTypes::arrayOf(TypeCheck::NON_EMPTY_STRING),
                     ],
                 ],
             ],
@@ -272,9 +274,9 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
         yield 'With check types (union types, array value) witch is not correct' => [
             [
                 'args' => [
-                    'test' => 'int|bool|null',
+                    'test' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::BOOL, TypeCheck::NULL),
                 ],
-                'numbers' => 'float[]',
+                'numbers' => ExpectedTypes::arrayOf(TypeCheck::FLOAT),
             ],
             [
                 'args' => [
@@ -293,6 +295,35 @@ final class ArrayStructureInternalValidatorTest extends KernelTestCase
             true,
             true,
         ];
+    }
+
+    public function testTypeCheckEnumWorksThroughNestedStructureHandlerPath(): void
+    {
+        $structure = [
+            'headers' => [
+                'ad' => [
+                    'cc' => TypeCheck::STRING,
+                ],
+            ],
+        ];
+
+        $data = [
+            'headers' => [
+                'ad' => [
+                    'cc' => new class () {
+                    },
+                ],
+            ],
+        ];
+
+        $validator = new ArrayStructureInternalValidation(new ErrorCollector(), false, true);
+
+        $validator->validate($structure, $data);
+
+        $this->assertSame(
+            ['Key "root.headers.ad.cc" expects type "string", got "object"'],
+            $validator->getErrorCollector()->all()
+        );
     }
 
     #[DataProvider('provideInvalidExpectedTypes')]

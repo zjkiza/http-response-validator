@@ -4,38 +4,25 @@ declare(strict_types=1);
 
 namespace ZJKiza\HttpResponseValidator\Validator\Helper;
 
-use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
+use ZJKiza\HttpResponseValidator\Contract\ExpectedTypeInterface;
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
+use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker\LegacyTypeParser;
+use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker\TypeNormalizer;
+use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker\TypePredicate;
+use ZJKiza\HttpResponseValidator\Validator\Type\ArrayOfExpectedType;
+use ZJKiza\HttpResponseValidator\Validator\Type\UnionExpectedType;
 
 final class TypeChecker
 {
-    private const SUPPORTED_TYPES = [
-        'string',
-        'non-empty-string',
-        'int',
-        'float',
-        'bool',
-        'array',
-        'object',
-        'null',
-        'mixed',
-    ];
-
-    public static function isValid(string $expectedType, mixed $value): bool
+    public static function isValid(string|TypeCheck|ExpectedTypeInterface $expectedType, mixed $value): bool
     {
-        // expectedType[]
-        if (\str_ends_with($expectedType, '[]')) {
+        if ($expectedType instanceof ArrayOfExpectedType) {
             if (!\is_array($value)) {
                 return false;
             }
 
-            $innerType = \substr($expectedType, 0, -2);
-
-            if (!\in_array($innerType, self::SUPPORTED_TYPES, true)) {
-                throw new InvalidArgumentException(\sprintf('Unsupported type "%s" in expected type "%s".', $innerType, $expectedType));
-            }
-
             foreach ($value as $item) {
-                if (!self::isValid($innerType, $item)) {
+                if (!TypePredicate::matches($expectedType->type(), $item)) {
                     return false;
                 }
             }
@@ -43,17 +30,37 @@ final class TypeChecker
             return true;
         }
 
-        return match ($expectedType) {
-            'string' => \is_string($value),
-            'non-empty-string' => \is_string($value) && '' !== $value,
-            'int' => \is_int($value),
-            'float' => \is_float($value),
-            'bool' => \is_bool($value),
-            'array' => \is_array($value),
-            'object' => \is_object($value),
-            'null' => \is_null($value),
-            'mixed' => true,
-            default => throw new InvalidArgumentException(\sprintf('Unsupported type "%s" in expected types "%s".', $expectedType, \implode(',', self::SUPPORTED_TYPES))),
-        };
+        if ($expectedType instanceof UnionExpectedType) {
+            foreach ($expectedType->types() as $type) {
+                if (TypePredicate::matches($type, $value)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        $normalizedType = TypeNormalizer::normalize($expectedType);
+
+        if (LegacyTypeParser::isArrayOfNotation($normalizedType)) {
+            if (!\is_array($value)) {
+                return false;
+            }
+
+            $innerType = LegacyTypeParser::innerType($normalizedType);
+            $enumType = TypeNormalizer::resolveEnumType($innerType, $normalizedType);
+
+            foreach ($value as $item) {
+                if (!TypePredicate::matches($enumType, $item)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        $enumType = TypeNormalizer::resolveEnumType($normalizedType, $normalizedType);
+
+        return TypePredicate::matches($enumType, $value);
     }
 }

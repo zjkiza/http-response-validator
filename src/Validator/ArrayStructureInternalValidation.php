@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace ZJKiza\HttpResponseValidator\Validator;
 
+use ZJKiza\HttpResponseValidator\Contract\ExpectedTypeInterface;
 use ZJKiza\HttpResponseValidator\Contract\StructureValidationHandlerInterface;
 use ZJKiza\HttpResponseValidator\Contract\ValidationStrategy;
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
+use ZJKiza\HttpResponseValidator\Validator\Handler\MissingKeyHandler;
 use ZJKiza\HttpResponseValidator\Validator\Handler\NestedStructureHandler;
+use ZJKiza\HttpResponseValidator\Validator\Handler\NullCheckHandler;
+use ZJKiza\HttpResponseValidator\Validator\Handler\TypeCheckHandler;
+use ZJKiza\HttpResponseValidator\Validator\Handler\WildcardHandler;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
 use ZJKiza\HttpResponseValidator\Validator\Helper\RecursiveDescent;
 use ZJKiza\HttpResponseValidator\Validator\Helper\TypeChecker;
-use ZJKiza\HttpResponseValidator\Validator\Handler\WildcardHandler;
-use ZJKiza\HttpResponseValidator\Validator\Handler\MissingKeyHandler;
-use ZJKiza\HttpResponseValidator\Validator\Handler\NullCheckHandler;
-use ZJKiza\HttpResponseValidator\Validator\Handler\TypeCheckHandler;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ValidationContext;
 
 final readonly class ArrayStructureInternalValidation implements ValidationStrategy
@@ -58,7 +60,6 @@ final readonly class ArrayStructureInternalValidation implements ValidationStrat
     public function validate(array $structure, array $data, string $currentPath = 'root'): void
     {
         foreach ($structure as $key => $expected) {
-
             foreach ($this->handlers as $handler) {
                 if ($handler->support($key, $expected, $data, $currentPath, $this->context)) {
                     $handled = $handler->handle($key, $expected, $data, $currentPath, $this->errorCollector, $this->context);
@@ -87,10 +88,9 @@ final readonly class ArrayStructureInternalValidation implements ValidationStrat
         return $this->errorCollector;
     }
 
-    /** @return array{string, string|null} */
+    /** @return array{int|string, mixed} */
     private function transformLeaf(int|string $key, mixed $expected): array
     {
-        // Format A: ['a', 'b']
         if (\is_int($key)) {
             $stringValue = \is_scalar($expected) || $expected instanceof \Stringable
                 ? (string) $expected
@@ -99,7 +99,10 @@ final readonly class ArrayStructureInternalValidation implements ValidationStrat
             return [$stringValue, null];
         }
 
-        // Format B: ['name' => 'string']
-        return [$key, \is_string($expected) ? $expected : null];
+        if (\is_string($expected) || $expected instanceof TypeCheck || $expected instanceof ExpectedTypeInterface) {
+            return [$key, $expected];
+        }
+
+        return [$key, null];
     }
 }

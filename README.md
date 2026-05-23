@@ -63,10 +63,12 @@ Example with `symfony/http-client` and built-in handlers:
 use Symfony\Component\HttpClient\HttpClient;
 use ZJKiza\HttpResponseValidator\Monad\Result;
 use ZJKiza\HttpResponseValidator\Contract\HandlerFactoryInterface;
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Handler\HttpResponseLoggerHandler;
 use ZJKiza\HttpResponseValidator\Handler\ExtractResponseJsonHandler;
 use ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler;
 use ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateInternalHandler;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
 
 // ... in the service/controller with DI you get a handler factory
 public function __construct(private HandlerFactoryInterface $handlerFactory) {}
@@ -92,7 +94,7 @@ public function fetch(): array
 }
 ```
 
-If a step fails, an exception will be thrown with a message containing a unique `Message ID=...', and the error will be logged via the PSR‑3 logger.
+If a step fails, an exception will be thrown with a message containing a unique `Message ID=<hex>`, and the error will be logged via the PSR‑3 logger.
 
 ## Built-in Handlers
 
@@ -113,26 +115,36 @@ All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` 
   - What it does: Validates array structure with **exact** match: same keys as expected, possible deep (nested), optional type checks.
   - Essential methods:
     - `setKeys(array $structure): self` – associative or indexed array describing expected structure.
-    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set. If a key/keys is defined in the structure but the value is null, it will be ignored and not treated as an error.
-    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], float[]...). 
+    - `setIgnoreNulls(bool $ignoreNulls = false): self` – controls null-only validation (`Key "... cannot be null"`). Important: when `setCheckTypes(true)` is enabled, type validation still runs. If null should be accepted, define it in expected type (for example `ExpectedTypes::union(TypeCheck::STRING, TypeCheck::NULL)`).
+    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Preferred typed API: `TypeCheck`, `ExpectedTypes::union(...)`, `ExpectedTypes::arrayOf(...)`.
+    - Legacy compatibility: string type declarations (for example `'string'`, `'int|string'`, `'string[]'`) are still supported for backward compatibility and will be removed in a future major release.
 
 - `ArrayStructureValidateInternalHandler`
   - What it does: Validates array structure with more internally permissive (flexible) rules, suitable for partial checks.
   - Essential methods:
     - `setKeys(array $structure): self` – associative or indexed array describing expected structure.
-    - `setIgnoreNulls(bool $ignoreNulls = false): self` – ignore null values if set. If a key/keys is defined in the structure but the value is null, it will be ignored and not treated as an error.
-    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Supported types: string, non-empty-string, int, float, bool, array, object, null, mixed. You can also use union types (ex. 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], non-empty-string[], float[]...).
+    - `setIgnoreNulls(bool $ignoreNulls = false): self` – controls null-only validation (`Key "... cannot be null"`). Important: when `setCheckTypes(true)` is enabled, type validation still runs. If null should be accepted, define it in expected type (for example `ExpectedTypes::union(TypeCheck::STRING, TypeCheck::NULL)`).
+    - `setCheckTypes(bool $checkTypes = false): self` – enable type checking when structure contains types. Preferred typed API: `TypeCheck`, `ExpectedTypes::union(...)`, `ExpectedTypes::arrayOf(...)`.
+    - Legacy compatibility: string type declarations (for example `'string'`, `'int|string'`, `'string[]'`) are still supported for backward compatibility and will be removed in a future major release.
 
 ## Direct Use: ArrayStructureExactValidation and ArrayStructureInternalValidation
 
 Validation services can be used standalone without the handler pipeline.
-For example, to validate data against a strict structure with type (string, non-empty-string, int, float, bool, array, object, null, mixed) checking. It has the possibility to check more types as soon as they are separated | (ex : 'int|string') and checking whether all elements of the array belong to a certain type (ex. int[], string[], non-empty-string[], float[]...).
+For example, to validate data against a strict structure with typed checks (`TypeCheck`, `ExpectedTypes::union(...)`, `ExpectedTypes::arrayOf(...)`).
 
 ```php
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureExactValidation;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
 
 $validator = new ArrayStructureExactValidation(new ErrorCollector(), $ignoreNulls = false, $checkTypes = true);
+
+$structure = [
+    'id' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::STRING),
+    'email' => TypeCheck::STRING,
+    'addresses' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+];
 
 $validator->validate($structure, $data);
 
@@ -144,10 +156,17 @@ if ($validator->getErrorCollector()->hasErrors()) {
 For internal/permissive validation:
 
 ```php
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureInternalValidation;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
 
 $validator = new ArrayStructureInternalValidation(new ErrorCollector(), $ignoreNulls = false, $checkTypes = true);
+
+$structure = [
+    'id' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::STRING),
+    'email' => TypeCheck::STRING,
+];
 
 $validator->validate($structure, $data);
 
@@ -160,14 +179,17 @@ if ($validator->getErrorCollector()->hasErrors()) {
 
 ```php
 // ...
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
+
 $data = Result::success($response)
     ->bind($this->handlerFactory->create(HttpResponseLoggerHandler::class)->setExpectedStatus(200))
     ->bind($this->handlerFactory->create(ExtractResponseJsonHandler::class)->setAssociative(true))
     ->bind($this->handlerFactory->create(ArrayStructureValidateExactHandler::class)
         ->setKeys([
-            'id' => 'int|string', 
-            'email' => 'string',
-            'addresses' => 'string[]', // array of strings
+            'id' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::STRING),
+            'email' => TypeCheck::STRING,
+            'addresses' => ExpectedTypes::arrayOf(TypeCheck::STRING),
         ])
         ->setCheckTypes(true)
         ->setIgnoreNulls(false)
@@ -209,8 +231,8 @@ Example for data
                     'error 3',
                 ],
                 'messages' => [
-                    'foo'
-                    'bar'
+                    'foo',
+                    'bar',
                 ],
             ],
         ];
@@ -222,33 +244,43 @@ The validation would look like
     ->bind($this->handlerFactory->create(ArrayStructureValidateExactHandler::class)
         ->setKeys([
             'args' => [
-                'test' => 'string',
+                'test' => TypeCheck::STRING,
             ],
             'headers' => [
-                'host' => 'string',
-                'dnt' => 'float',
+                'host' => TypeCheck::STRING,
+                'dnt' => TypeCheck::FLOAT,
                 'foo' => true,
                 'ad' => [
-                    'bb' => 'array',
-                    'cc' => 'object',
-                    'dd' => 'null',
+                    'bb' => TypeCheck::ARRAY,
+                    'cc' => TypeCheck::OBJECT,
+                    'dd' => TypeCheck::NULL,
                 ],
             ],
             'body' => [
                 'items' => [
                     '*' => [
-                        'name' => 'string',
-                        'age' => 'int',
+                        'name' => TypeCheck::STRING,
+                        'age' => TypeCheck::INT,
                     ],
                 ],
-                'errors' => 'string[]'
-                'messages' => 'non-empty-string[]'
+                'errors' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+                'messages' => ExpectedTypes::arrayOf(TypeCheck::NON_EMPTY_STRING),
             ],
         ])
         ->setCheckTypes(true)
         ->setIgnoreNulls(false)
     )
     ...
+```
+
+Legacy syntax (still supported for backward compatibility, planned for removal in a future major release):
+
+```php
+->setKeys([
+    'id' => 'int|string',
+    'email' => 'string',
+    'addresses' => 'string[]',
+])
 ```
 
 
@@ -358,6 +390,49 @@ $this->assertArrayStrictStructureAndValues(
 ```
 must be exactly identical (except for the order in the associative array).
 
+3. `assertArrayStructure(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true)`
+
+Structure validation helper backed by `ArrayStructureInternalValidation`.
+- useful when you want to assert response shape with optional type checks,
+- supports typed declarations (`TypeCheck`, `ExpectedTypes::union(...)`, `ExpectedTypes::arrayOf(...)`) and legacy string declarations during BC window.
+
+Example:
+```php
+$this->assertArrayStructure(
+    $actual,
+    [
+        'meta' => [
+            'id' => TypeCheck::INT,
+            'status' => ExpectedTypes::union(TypeCheck::STRING, TypeCheck::NULL),
+        ],
+    ],
+    true,  // checkTypes
+    true   // ignoreNulls
+);
+```
+
+4. `arrayStructureExact(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true)`
+
+Strict structure validation helper backed by `ArrayStructureExactValidation`.
+- enforces exact key matching on each level (except wildcard branches),
+- supports the same type declaration model as `assertArrayStructure`.
+
+Example:
+```php
+$this->arrayStructureExact(
+    $actual,
+    [
+        'items' => [
+            '*' => [
+                'id' => TypeCheck::INT,
+                'name' => TypeCheck::STRING,
+            ],
+        ],
+    ],
+    true
+);
+```
+
 ### Rules of conduct
 
 - Associative array
@@ -408,7 +483,9 @@ $this->assertArrayStrictStructureAndValues(
 
 - The trait must be used in a class that inherits from `PHPUnit\Framework\TestCase`,
 - `assertArrayStructureAndValues` allows additional keys,
-- `assertArrayStrictStructureAndValues` requires an exact match.
+- `assertArrayStrictStructureAndValues` requires an exact match,
+- `assertArrayStructure` validates structure using internal/permissive validator rules,
+- `arrayStructureExact` validates structure using exact/strict validator rules.
 
 
 ## Logging in and message ID

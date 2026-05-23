@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace ZJKiza\HttpResponseValidator\Tests\Functional;
 
+use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
 use ZJKiza\HttpResponseValidator\Tests\Resources\KernelTestCase;
 use ZJKiza\HttpResponseValidator\Validator\ArrayStructureExactValidation;
 use ZJKiza\HttpResponseValidator\Validator\Helper\ErrorCollector;
+use ZJKiza\HttpResponseValidator\Validator\Type\ExpectedTypes;
 
 final class ArrayStructureExactValidatorTest extends KernelTestCase
 {
@@ -74,29 +76,29 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
     {
         $structure = [
             'args' => [
-                'test' => 'int|null|string',
-                'test-empty-string' => 'string',
-                'filled' => 'non-empty-string',
+                'test' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::NULL, TypeCheck::STRING),
+                'test-empty-string' => TypeCheck::STRING,
+                'filled' => TypeCheck::NON_EMPTY_STRING,
             ],
             'headers' => [
-                'host' => 'string',
-                'dnt' => 'float',
+                'host' => TypeCheck::STRING,
+                'dnt' => TypeCheck::FLOAT,
                 'foo' => true,
                 'ad' => [
-                    'bb' => 'array',
-                    'cc' => 'object',
-                    'dd' => 'null',
+                    'bb' => TypeCheck::ARRAY,
+                    'cc' => TypeCheck::OBJECT,
+                    'dd' => TypeCheck::NULL,
                 ],
             ],
             'body' => [
                 'items' => [
                     '*' => [
-                        'name' => 'string',
-                        'age' => 'int',
+                        'name' => TypeCheck::STRING,
+                        'age' => TypeCheck::INT,
                     ],
                 ],
-                'errors' => 'string[]',
-                'errors-not-empty-string' => 'non-empty-string[]',
+                'errors' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+                'errors-not-empty-string' => ExpectedTypes::arrayOf(TypeCheck::NON_EMPTY_STRING),
             ],
         ];
 
@@ -165,14 +167,14 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
 
         $structure = [
             'args' => [
-                'test_string' => 'string|null',
-                'test_non_empty_string' => 'non-empty-string',
-                'test_int' => 'int|float',
-                'test_float' => 'float',
-                'test_bool' => 'bool',
-                'test_array' => 'array',
-                'test_object' => 'object',
-                'test_null' => 'null',
+                'test_string' => ExpectedTypes::union(TypeCheck::STRING, TypeCheck::NULL),
+                'test_non_empty_string' => TypeCheck::NON_EMPTY_STRING,
+                'test_int' => ExpectedTypes::union(TypeCheck::INT, TypeCheck::FLOAT),
+                'test_float' => TypeCheck::FLOAT,
+                'test_bool' => TypeCheck::BOOL,
+                'test_array' => TypeCheck::ARRAY,
+                'test_object' => TypeCheck::OBJECT,
+                'test_null' => TypeCheck::NULL,
             ],
         ];
 
@@ -261,24 +263,24 @@ final class ArrayStructureExactValidatorTest extends KernelTestCase
     {
         $structure = [
             'args' => [
-                'test' => 'string',
+                'test' => TypeCheck::STRING,
             ],
             'headers' => [
-                'host' => 'string',
+                'host' => TypeCheck::STRING,
                 'foo' => true,
                 'ad' => [
-                    'bb' => 'array',
-                    'cc' => 'string',
+                    'bb' => TypeCheck::ARRAY,
+                    'cc' => TypeCheck::STRING,
                 ],
             ],
             'body' => [
                 'items' => [
                     '*' => [
-                        'name' => 'string',
+                        'name' => TypeCheck::STRING,
                     ],
                 ],
-                'errors' => 'string[]',
-                'errors-not-empty-string' => 'non-empty-string[]',
+                'errors' => ExpectedTypes::arrayOf(TypeCheck::STRING),
+                'errors-not-empty-string' => ExpectedTypes::arrayOf(TypeCheck::NON_EMPTY_STRING),
             ],
         ];
 
