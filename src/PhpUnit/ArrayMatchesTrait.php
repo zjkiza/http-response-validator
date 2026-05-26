@@ -61,7 +61,7 @@ trait ArrayMatchesTrait
      * @param mixed[] $actual
      * @param mixed[] $expected
      */
-    public function arrayStructureExact(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true): void
+    public function assertArrayStructureExact(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true): void
     {
         $validator = new ArrayStructureExactValidation(new ErrorCollector(), $ignoreNulls, $checkTypes);
         $validator->validate($expected, $actual);

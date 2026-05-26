@@ -145,7 +145,7 @@ final class CoverageGapsTest extends KernelTestCase
             ],
         ];
 
-        $this->arrayStructureExact($actual, $expected, true);
+        $this->assertArrayStructureExact($actual, $expected, true);
     }
 
     public function testPhpUnitToolStrictCompareFailsOnExtraKeys(): void

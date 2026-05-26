@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.1]
+Change/fix 
+- function name from ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::arrayStructureExact to assertArrayStructureExact
+
 ## [0.12.0]
 Added
 - Added typed expected-type API usage across validators and handlers using:
@@ -10,7 +14,7 @@ Added
   - `ZJKiza\HttpResponseValidator\Validator\Type\UnionExpectedType`
 - Added/expanded PHPUnit helper usage for:
   - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::assertArrayStructure`
-  - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::arrayStructureExact`
+  - `ZJKiza\HttpResponseValidator\PhpUnit\ArrayMatchesTrait::assertArrayStructureExact`
 - Added and expanded unit tests for validator/type handling and logging components.
 
 Optimization
