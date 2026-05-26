@@ -411,7 +411,7 @@ $this->assertArrayStructure(
 );
 ```
 
-4. `arrayStructureExact(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true)`
+4. `assertArrayStructureExact(array $actual, array $expected, bool $checkTypes = false, bool $ignoreNulls = true)`
 
 Strict structure validation helper backed by `ArrayStructureExactValidation`.
 - enforces exact key matching on each level (except wildcard branches),
@@ -419,7 +419,7 @@ Strict structure validation helper backed by `ArrayStructureExactValidation`.
 
 Example:
 ```php
-$this->arrayStructureExact(
+$this->assertArrayStructureExact(
     $actual,
     [
         'items' => [
@@ -485,7 +485,7 @@ $this->assertArrayStrictStructureAndValues(
 - `assertArrayStructureAndValues` allows additional keys,
 - `assertArrayStrictStructureAndValues` requires an exact match,
 - `assertArrayStructure` validates structure using internal/permissive validator rules,
-- `arrayStructureExact` validates structure using exact/strict validator rules.
+- `assertArrayStructureExact` validates structure using exact/strict validator rules.
 
 
 ## Logging in and message ID
