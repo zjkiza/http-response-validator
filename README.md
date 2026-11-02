@@ -96,6 +96,33 @@ public function fetch(): array
 
 If a step fails, an exception will be thrown with a message containing a unique `Message ID=<hex>`, and the error will be logged via the PSR‑3 logger.
 
+### Unexpected status code
+
+When `HttpResponseLoggerHandler` receives an unexpected status code, the log record and the exception use the same `Message ID`, and the exception message contains what is logged (status, method, URL and the response body, shortened to 2000 characters), so the cause is visible in an error tracker:
+
+```
+Message ID=5757cc40... : [HttpRequestLogger ERROR CODE] Unexpected status code 400 expected 200 | GET https://example.com/auth/*** | Response body: {"error": "invalid"}
+```
+
+| Status | Exception |
+|--------|-----------|
+| 400 | `ZJKiza\HttpResponseValidator\Exception\HttpBadRequestException` |
+| 401 | `ZJKiza\HttpResponseValidator\Exception\HttpUnauthorizedException` |
+| 403 | `ZJKiza\HttpResponseValidator\Exception\HttpForbiddenException` |
+| 404 | `ZJKiza\HttpResponseValidator\Exception\HttpNotFoundException` |
+| other | `ZJKiza\HttpResponseValidator\Exception\RuntimeException` |
+
+The first four extend the matching Symfony `*HttpException` and implement `ZJKiza\HttpResponseValidator\Contract\HttpResponseExceptionInterface` (which extends the marker `ExceptionInterface`), with `getMessageId()` and `getRequestFailed()`.
+
+Sensitive data is masked in the URL and body: the keys given to `addSensitiveKeys()` (and `password`, `token`, `apiKey`), and literal values given to `addSensitiveValues()`, e.g. a token placed in the URL path:
+
+```php
+$this->handlerFactory->create(HttpResponseLoggerHandler::class)
+    ->addSensitiveValues([$token]);
+```
+
+The message includes the URL and body, so show only `getMessageId()` to end users, never `getMessage()`.
+
 ## Built-in Handlers
 
 All handlers implement `ZJKiza\HttpResponseValidator\Contract\HandlerInterface` and expose a fluent API for configuration.

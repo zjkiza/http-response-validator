@@ -9,6 +9,8 @@ use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use ZJKiza\HttpResponseValidator\Contract\HandlerFactoryInterface;
 use ZJKiza\HttpResponseValidator\Enum\TypeCheck;
+use ZJKiza\HttpResponseValidator\Exception\HttpBadRequestException;
+use ZJKiza\HttpResponseValidator\Exception\HttpNotFoundException;
 use ZJKiza\HttpResponseValidator\Exception\InvalidArgumentException;
 use ZJKiza\HttpResponseValidator\Exception\RuntimeException;
 use ZJKiza\HttpResponseValidator\Handler\ArrayStructureValidateExactHandler;
@@ -162,6 +164,85 @@ final class HttpResponseValidatorTest extends KernelTestCase
         $this->assertArrayStructureAndValues($logger->records, $expected);
 
         $result->getOrThrow();
+    }
+
+    public function testBadRequestExceptionContainsLoggedMessageWithSingleMessageId(): void
+    {
+        /** @var TestLogger $logger */
+        $logger = $this->getContainer()->get(TestLogger::class);
+
+        $mockResponse = new MockResponse(
+            '{"error":"invalid","errors":["first","second"],"token":"secret-body-token"}',
+            [
+                'response_headers' => [
+                    'content-type' => 'application/json',
+                ],
+                'http_code' => 400,
+            ]
+        );
+
+        $client = new MockHttpClient($mockResponse);
+        $response = $client->request('GET', 'https://example.com/auth/secret-path-token?token=secret-query-token&lang=en');
+        \restore_exception_handler();
+
+        $result = Result::success($response)
+            ->bind($this->handlerFactory->create(HttpResponseLoggerHandler::class)->addSensitiveValues(['secret-path-token']));
+
+        try {
+            $result->getOrThrow();
+            self::fail('Expected exception was not thrown.');
+        } catch (HttpBadRequestException $exception) {
+            /** @var array<int, array{level: string, message: string, context: array<string, mixed>}> $records */
+            $records = $logger->records;
+
+            // The logger writes the message first, the handler writes it again with the trace.
+            self::assertCount(2, $records);
+
+            // One identifier is used everywhere: in the log, in the exception message and in the property.
+            self::assertMatchesRegularExpression('/^Message ID=[a-f0-9]+$/', $exception->getMessageId());
+            self::assertSame(1, \substr_count($exception->getMessage(), 'Message ID='));
+            self::assertTrue(\str_starts_with($exception->getMessage(), $exception->getMessageId()));
+            self::assertStringContainsString($exception->getMessageId(), $records[0]['message']);
+            self::assertStringContainsString($exception->getMessageId(), $records[1]['message']);
+
+            // The exception message carries what is logged, so the cause is visible without the logs.
+            self::assertStringContainsString('[HttpRequestLogger ERROR CODE] Unexpected status code 400 expected 200', $exception->getMessage());
+            self::assertStringContainsString('GET https://example.com/auth/***?token=***&lang=en', $exception->getMessage());
+            self::assertStringContainsString('"error": "invalid"', $exception->getMessage());
+
+            // The body must not be touched by the "run place" substitution (": [" inside the body).
+            $details = \explode(' | ', $exception->getMessage(), 2)[1] ?? '';
+            self::assertStringContainsString('"errors": [ "first", "second" ]', $details);
+            self::assertStringNotContainsString('->', $details);
+
+            // Sensitive data is masked everywhere.
+            self::assertStringNotContainsString('secret-path-token', $exception->getMessage());
+            self::assertStringNotContainsString('secret-query-token', $exception->getMessage());
+            self::assertStringNotContainsString('secret-body-token', $exception->getMessage());
+            self::assertStringNotContainsString('secret-path-token', (string) \json_encode($records[0]['context']));
+            self::assertStringNotContainsString('secret-query-token', (string) \json_encode($records[0]['context']));
+
+            self::assertSame(400, $exception->getRequestFailed()['code']);
+            self::assertSame('https://example.com/auth/***?token=***&lang=en', $exception->getRequestFailed()['url']);
+        }
+    }
+
+    public function testSensitiveValuesAreNotMaskedWhenNotSet(): void
+    {
+        $handler = $this->handlerFactory->create(HttpResponseLoggerHandler::class);
+        $handler->addSensitiveValues(['secret-path-token']);
+        $handler->addSensitiveValues();
+
+        $client = new MockHttpClient(new MockResponse('{}', ['http_code' => 404]));
+        $response = $client->request('GET', 'https://example.com/auth/secret-path-token');
+        \restore_exception_handler();
+
+        try {
+            Result::success($response)->bind($handler)->getOrThrow();
+            self::fail('Expected exception was not thrown.');
+        } catch (HttpNotFoundException $exception) {
+            self::assertStringContainsString('https://example.com/auth/secret-path-token', $exception->getMessage());
+        }
     }
 
     public function testExpectExceptionForInvalidJsonFormat(): void
