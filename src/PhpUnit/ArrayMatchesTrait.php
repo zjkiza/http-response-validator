@@ -52,7 +52,7 @@ trait ArrayMatchesTrait
 
         $errors = $validator->getErrorCollector()->all();
 
-        if (true === (bool) $errors) {
+        if ((bool) $errors) {
             self::fail(\implode(\PHP_EOL, $errors));
         }
 
@@ -72,7 +72,7 @@ trait ArrayMatchesTrait
 
         $errors = $validator->getErrorCollector()->all();
 
-        if (true === (bool) $errors) {
+        if ((bool) $errors) {
             self::fail(\implode(\PHP_EOL, $errors));
         }
 

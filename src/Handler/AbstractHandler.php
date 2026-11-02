@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZJKiza\HttpResponseValidator\Handler;
 
 use Psr\Log\LoggerInterface;
+use ZJKiza\HttpResponseValidator\HttpLogger\HttpExceptionFactory;
 use ZJKiza\HttpResponseValidator\Monad\Result;
 
 use function ZJKiza\HttpResponseValidator\addIdInMessage;
@@ -30,12 +31,18 @@ abstract class AbstractHandler
         $backtrace = \debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
         $runPlace = $this->getBacktrace($backtrace);
 
-        /** @var string $overrideMessage */
-        $overrideMessage = \preg_replace(
+        // The request details (response body) come after the separator and must stay untouched.
+        $parts = \explode(HttpExceptionFactory::DETAILS_SEPARATOR, addIdInMessage($exception->getMessage()), 2);
+
+        /** @var string $head */
+        $head = \preg_replace(
             '/(:\s*)(\[[^\]]+\])/',
             '$1'.$runPlace.' $2',
-            addIdInMessage($exception->getMessage())
+            $parts[0]
         );
+        $parts[0] = $head;
+
+        $overrideMessage = \implode(HttpExceptionFactory::DETAILS_SEPARATOR, $parts);
 
         $loggerMessage = \sprintf(
             '[%s] %s',

@@ -23,6 +23,9 @@ final class HttpResponseLoggerHandler extends AbstractHandler implements Handler
     /** @var string[] */
     private array $sensitiveKeys = [];
 
+    /** @var string[] */
+    private array $sensitiveValues = [];
+
     public function __construct(
         LoggerInterface $logger,
         private readonly HttpResponseLogger $responseLogger,
@@ -42,7 +45,7 @@ final class HttpResponseLoggerHandler extends AbstractHandler implements Handler
                 $this->responseLogger->addSensitiveKeys($this->sensitiveKeys);
             }
 
-            $this->responseLogger->validateResponse($value, $this->expectedStatus);
+            $this->responseLogger->validateResponse($value, $this->expectedStatus, $this->sensitiveValues);
 
             /** @var Result<ResponseInterface|string> */
             return Result::success($value);
@@ -67,6 +70,19 @@ final class HttpResponseLoggerHandler extends AbstractHandler implements Handler
     public function addSensitiveKeys(array $addKeys = []): self
     {
         $this->sensitiveKeys = $addKeys;
+
+        return $this;
+    }
+
+    /**
+     * Literal values (e.g. a token placed in the URL path) that are masked in the logged URL and body.
+     * They are not kept between calls: set them before every use of the handler.
+     *
+     * @param string[] $values
+     */
+    public function addSensitiveValues(array $values = []): self
+    {
+        $this->sensitiveValues = $values;
 
         return $this;
     }

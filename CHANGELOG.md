@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.13.0]
+Added
+- New exceptions thrown by `HttpResponseLoggerHandler` for an unexpected status code: `HttpBadRequestException` (400), `HttpUnauthorizedException` (401), `HttpForbiddenException` (403) and `HttpNotFoundException` (404). They extend the matching Symfony `*HttpException` classes (so existing `catch` blocks keep working) and implement the new `HttpResponseExceptionInterface`, which extends the bundle marker `ExceptionInterface`.
+- `HttpResponseExceptionInterface::getMessageId()` (`Message ID=<hex>`) and `getRequestFailed()` (the data logged under the `http_request_failed` key).
+- `HttpResponseLoggerHandler::addSensitiveValues()` masks literal values (e.g. a token placed in the URL path) in the logged and exception URL and body. The values are not stored between calls.
+
+Changed
+- The exception message now contains what is written to the log: `Message ID=<hex> : [HttpRequestLogger ERROR CODE] Unexpected status code 400 expected 200 | GET <url> | Response body: <body>`, so the cause is visible in an error tracker (e.g. Sentry) without searching the logs. The body is shortened to 2000 characters. Statuses without a dedicated exception still throw `RuntimeException`, with the same message format.
+- Previously the 4xx exceptions did not implement `ExceptionInterface`, so code that wraps everything that is not a bundle exception generated a second, different `Message ID`. Now there is a single ID in the log and in the exception.
+- Query parameters named in the sensitive keys (`password`, `token`, `apiKey` and the ones added with `addSensitiveKeys()`) are masked in the logged URL.
+
+Fixed
+- `AbstractHandler::fail()` no longer substitutes the "run place" inside the response body part of the message (e.g. `"errors": ["x"]`).
+
+Security
+- The exception message now includes the request URL and the response body. Do not show `$exception->getMessage()` to end users; show only `getMessageId()`.
+
 ## [0.12.3]
 Added
 - Added Symfony 8 support: `symfony/config`, `symfony/dependency-injection` and `symfony/http-kernel` now allow `^8.0`.

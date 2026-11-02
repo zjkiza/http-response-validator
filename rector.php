@@ -21,6 +21,8 @@ return static function (RectorConfig $rectorConfig): void {
 
     $rectorConfig->skip([
         __DIR__ . '/tests/Resources/var/cache/**/*',
+        // The `@var T` cast is required by PHPStan and Psalm; Rector removes it together with the variable.
+        __DIR__ . '/src/Handler/Factory/HandlerFactory.php',
     ]);
 
     $rectorConfig->phpVersion(PhpVersion::PHP_84);
